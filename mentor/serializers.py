@@ -1,18 +1,12 @@
 from rest_framework import serializers
-from .models import MentorProfile, MentorPortfolio
+from .models import MentorProfile
 
-class MentorPortfolioSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MentorPortfolio
-        fields = '__all__'
-        read_only_fields = ['id', 'mentor', 'created_at', 'updated_at']
 
 class MentorProfileSerializer(serializers.ModelSerializer):
-    portfolio_items = MentorPortfolioSerializer(many=True, read_only=True)
     class Meta:
         model = MentorProfile
         fields = '__all__'
-        read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'portfolio_items']
+        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at']
 
 class MentorOnboardingSerializer(serializers.ModelSerializer):
     class Meta:

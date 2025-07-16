@@ -3,7 +3,7 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import TalentProfile
-from .serializers import TalentOnboardingSerializer
+from .serializers import TalentOnboardingSerializer, TalentProfileSerializer
 
 # Create your views here.
 
@@ -26,3 +26,12 @@ class TalentOnboardingProfileSaveAPIView(generics.GenericAPIView):
                 "profile": serializer.data
             }, status=status.HTTP_201_CREATED)
         return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+class TalentProfileUpdateAPIView(generics.UpdateAPIView):
+    serializer_class = TalentProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        user = self.request.user
+        profile, _ = TalentProfile.objects.get_or_create(user=user)
+        return profile

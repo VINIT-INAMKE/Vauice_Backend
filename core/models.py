@@ -114,20 +114,16 @@ def update_talent_pool_on_profile_save(sender, instance, created, **kwargs):
 @receiver(post_save, sender='mentor.MentorProfile')
 def update_talent_pool_on_mentor_save(sender, instance, created, **kwargs):
     """
-    When a new mentor is created, add all 100% complete talents to their pool
+    When a new mentor is created, add all talents to their pool (profile completion logic removed)
     """
     from django.contrib.auth import get_user_model
     User = get_user_model()
     
     if created:
-        # Get all talents with 100% complete profiles
-        talents = User.objects.filter(
-            user_type='talent',
-            talent_profile__is_profile_complete=True,
-            talent_profile__profile_completion_percentage=100
-        )
+        # Get all talents
+        talents = User.objects.filter(user_type='talent')
         
-        # Add all complete talents to the new mentor's pool
+        # Add all talents to the new mentor's pool
         for talent in talents:
             TalentPool.objects.get_or_create(
                 mentor=instance.user,

@@ -1,18 +1,16 @@
 from rest_framework import serializers
-from .models import TalentProfile, TalentPortfolio
+from .models import TalentProfile
 
-class TalentPortfolioSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = TalentPortfolio
-        fields = '__all__'
-        read_only_fields = ['id', 'talent', 'created_at', 'updated_at']
 
 class TalentProfileSerializer(serializers.ModelSerializer):
-    portfolio_items = TalentPortfolioSerializer(many=True, read_only=True)
     class Meta:
         model = TalentProfile
-        fields = '__all__'
-        read_only_fields = ['id', 'user', 'created_at', 'updated_at', 'portfolio_items']
+        fields = [
+            'id', 'user', 'bio', 'date_of_birth', 'location', 'selected_sports',
+            'experience_years', 'profile_picture', 'cover_photo', 'is_verified',
+            'is_featured', 'social_links', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at']
 
 class TalentOnboardingSerializer(serializers.ModelSerializer):
     class Meta:

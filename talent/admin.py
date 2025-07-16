@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
-from .models import TalentProfile, TalentPortfolio
+from .models import TalentProfile
 
 class HasProfilePictureFilter(admin.SimpleListFilter):
     title = 'Has Profile Picture'
@@ -18,22 +18,10 @@ class HasProfilePictureFilter(admin.SimpleListFilter):
             return queryset.filter(profile_picture='')
         return queryset
 
-class TalentPortfolioInline(admin.StackedInline):
-    model = TalentPortfolio
-    extra = 0
-    readonly_fields = ['created_at', 'updated_at']
-    fieldsets = (
-        (None, {
-            'fields': ('title', 'description', 'sport', 'achievement_type', 'image', 'video_url', 'date_achieved', 'location', 'created_at', 'updated_at')
-        }),
-    )
-
 @admin.register(TalentProfile)
 class TalentProfileAdmin(admin.ModelAdmin):
-    inlines = [TalentPortfolioInline]
     list_display = [
         'talent_display',
-        'primary_sport',
         'experience_years',
         'is_verified',
         'is_featured',
@@ -44,7 +32,6 @@ class TalentProfileAdmin(admin.ModelAdmin):
     list_filter = [
         'is_verified',
         'is_featured',
-        'primary_sport',
         'experience_years',
         'created_at',
         ('location', admin.EmptyFieldListFilter),
@@ -55,7 +42,6 @@ class TalentProfileAdmin(admin.ModelAdmin):
         'user__email',
         'user__firstname',
         'user__lastname',
-        'primary_sport',
         'selected_sports',
         'location',
         'bio',
@@ -79,10 +65,10 @@ class TalentProfileAdmin(admin.ModelAdmin):
             'fields': ('bio', 'date_of_birth', 'location')
         }),
         ('Sports Information', {
-            'fields': ('selected_sports', 'primary_sport', 'experience_years', 'achievements', 'certifications')
+            'fields': ('selected_sports', 'experience_years')
         }),
         ('Media Content', {
-            'fields': ('profile_picture', 'cover_photo', 'profile_videos', 'highlight_reels'),
+            'fields': ('profile_picture', 'cover_photo'),
             'description': 'Instagram-style media content'
         }),
         ('Social Media', {
@@ -114,20 +100,6 @@ class TalentProfileAdmin(admin.ModelAdmin):
     talent_display.short_description = "Talent"
     talent_display.admin_order_field = 'user__firstname'
 
-    def sports_info(self, obj):
-        """Display sports information"""
-        sports = obj.selected_sports
-        if sports:
-            primary = obj.primary_sport or sports[0]
-            return format_html(
-                '<strong>{}</strong><br><small>{}</small>',
-                primary,
-                f"{len(sports)} sports, {obj.experience_years} years exp"
-            )
-        return "No sports selected"
-    sports_info.short_description = "Sports"
-    sports_info.admin_order_field = 'primary_sport'
-
     def location_status(self, obj):
         """Display location with status"""
         if obj.location:
@@ -152,34 +124,6 @@ class TalentProfileAdmin(admin.ModelAdmin):
             )
     verification_status.short_description = "Verification"
     verification_status.admin_order_field = 'is_verified'
-
-    def media_status(self, obj):
-        """Display media content status"""
-        media_count = 0
-        if obj.profile_picture:
-            media_count += 1
-        if obj.cover_photo:
-            media_count += 1
-        if obj.profile_videos:
-            media_count += len(obj.profile_videos)
-        if obj.highlight_reels:
-            media_count += len(obj.highlight_reels)
-
-        if media_count >= 3:
-            color = "green"
-            icon = "✅"
-        elif media_count >= 1:
-            color = "orange"
-            icon = "⚠️"
-        else:
-            color = "red"
-            icon = "❌"
-
-        return format_html(
-            '<span style="color: {};">{} {} items</span>',
-            color, icon, media_count
-        )
-    media_status.short_description = "Media Content"
 
     def created_date(self, obj):
         """Display formatted creation date"""
@@ -236,8 +180,7 @@ class TalentProfileAdmin(admin.ModelAdmin):
 
     def send_completion_reminder(self, request, queryset):
         """Send profile completion reminder"""
-        incomplete_talents = queryset.filter(is_profile_complete=False)
-        self.message_user(request, f"Profile completion reminder would be sent to {incomplete_talents.count()} talents.")
+        self.message_user(request, "Profile completion reminder would be sent to talents (feature removed).")
     send_completion_reminder.short_description = "Send completion reminder"
 
     # Custom admin methods
