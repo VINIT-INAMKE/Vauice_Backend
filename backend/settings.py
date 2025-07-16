@@ -32,7 +32,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG', default=True)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.57.30', '192.168.101.4']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.57.30', '192.168.101.4','vauice-backend.onrender.com']
 
 
 
@@ -292,6 +292,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",      # Next.js development
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
+    "https://vauice-backend.onrender.com",
     # React Native Expo development servers
     "http://localhost:8081",      # Expo development server
     "http://127.0.0.1:8081",      # Expo development server (alternative)
@@ -302,7 +303,6 @@ CORS_ALLOWED_ORIGINS = [
     "exp://192.168.57.30:8081",   # Your specific IP (from your terminal)
     "http://192.168.57.30:8081",
     "http://192.168.57.30:8000",
-        # HTTP version of your IP
 ]
 
 CORS_ALLOWED_HEADERS = [
