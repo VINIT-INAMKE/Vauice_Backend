@@ -2,8 +2,10 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from .models import MentorProfile
-from .serializers import MentorOnboardingSerializer, MentorProfileSerializer
+from .models import MentorProfile, SelectedTalent, RejectedTalent
+from .serializers import MentorOnboardingSerializer, MentorProfileSerializer, SelectedTalentSerializer, RejectedTalentSerializer
+from talent.models import TalentProfile
+from rest_framework import permissions
 
 # Create your views here.
 
@@ -35,3 +37,45 @@ class MentorProfileUpdateAPIView(generics.UpdateAPIView):
         user = self.request.user
         profile, _ = MentorProfile.objects.get_or_create(user=user)
         return profile
+
+class MentorSelectedTalentListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = SelectedTalentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        mentor = MentorProfile.objects.get(user=self.request.user)
+        return SelectedTalent.objects.filter(mentor=mentor)
+
+    def perform_create(self, serializer):
+        mentor = MentorProfile.objects.get(user=self.request.user)
+        serializer.save(mentor=mentor)
+
+class MentorSelectedTalentDeleteAPIView(generics.DestroyAPIView):
+    serializer_class = SelectedTalentSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'pk'
+
+    def get_queryset(self):
+        mentor = MentorProfile.objects.get(user=self.request.user)
+        return SelectedTalent.objects.filter(mentor=mentor)
+
+class MentorRejectedTalentListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = RejectedTalentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        mentor = MentorProfile.objects.get(user=self.request.user)
+        return RejectedTalent.objects.filter(mentor=mentor)
+
+    def perform_create(self, serializer):
+        mentor = MentorProfile.objects.get(user=self.request.user)
+        serializer.save(mentor=mentor)
+
+class MentorRejectedTalentDeleteAPIView(generics.DestroyAPIView):
+    serializer_class = RejectedTalentSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'pk'
+
+    def get_queryset(self):
+        mentor = MentorProfile.objects.get(user=self.request.user)
+        return RejectedTalent.objects.filter(mentor=mentor)

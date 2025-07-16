@@ -11,10 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import environ
 import os
 import dj_database_url
 from datetime import timedelta
-from environs import Env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,12 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-env = Env()
-Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
+env = environ.Env()
+environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
@@ -36,8 +32,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-# ALLOWED_HOSTS = ['vauice-backend.onrender.com','localhost', '127.0.0.1', '192.168.57.30', '192.168.101.4']
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['vauice-backend.onrender.com','localhost', '127.0.0.1', '192.168.57.30', '192.168.101.4']
 
 
 
@@ -45,23 +40,17 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'jazzmin',
-
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    
     'drf_yasg',
-   
-    'cloudinary',
     'cloudinary_storage',  # Add Cloudinary storage
-   
     'userauths',
     'talent',
     'mentor',
@@ -89,7 +78,6 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -147,53 +135,53 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 # Cloudinary Configuration
-# CLOUDINARY_STORAGE = {
-#     'CLOUD_NAME': env('CLOUDINARY_CLOUD_NAME'),
-#     'API_KEY': env('CLOUDINARY_API_KEY'),
-#     'API_SECRET': env('CLOUDINARY_API_SECRET'),
-#     'SECURE': True,  # Use HTTPS
-#     'MEDIA_TAG': 'media',
-#     'INVALID_VIDEO_ERROR_MESSAGE': 'Please upload a valid video file.',
-#     'STATIC_TAG': 'static',
-#     'STATIC_IMAGES_EXTENSIONS': ['jpg', 'jpe', 'jpeg', 'jpc', 'jp2', 'j2k', 'wdp', 'jxr', 'hdp', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'ico'],
-#     'MAGIC_FILE_PATH': 'magic',  # Path to magic file for file type detection
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': env('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': env('CLOUDINARY_API_KEY'),
+    'API_SECRET': env('CLOUDINARY_API_SECRET'),
+    'SECURE': True,  # Use HTTPS
+    'MEDIA_TAG': 'media',
+    'INVALID_VIDEO_ERROR_MESSAGE': 'Please upload a valid video file.',
+    'STATIC_TAG': 'static',
+    'STATIC_IMAGES_EXTENSIONS': ['jpg', 'jpe', 'jpeg', 'jpc', 'jp2', 'j2k', 'wdp', 'jxr', 'hdp', 'png', 'gif', 'webp', 'bmp', 'tif', 'tiff', 'ico'],
+    'MAGIC_FILE_PATH': 'magic',  # Path to magic file for file type detection
     
-#     # Additional settings for better file handling
-#     'STATIC_IMAGES_FOLDER': 'static/images',
-#     'STATIC_FILES_FOLDER': 'static/files',
-#     'MEDIA_FILES_FOLDER': 'media',
+    # Additional settings for better file handling
+    'STATIC_IMAGES_FOLDER': 'static/images',
+    'STATIC_FILES_FOLDER': 'static/files',
+    'MEDIA_FILES_FOLDER': 'media',
     
-#     # File upload settings
-#     'MAX_FILE_SIZE': 100 * 1024 * 1024,  # 100MB max file size
-#     'ALLOWED_EXTENSIONS': [
-#         # Images - High quality formats
-#         'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif', 'svg', 'ico',
-#         # Documents
-#         'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt',
-#         # Videos
-#         'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v',
-#         # Audio
-#         'mp3', 'wav', 'aac', 'flac', 'ogg',
-#         # Archives
-#         'zip', 'rar', '7z', 'tar', 'gz'
-#     ],
+    # File upload settings
+    'MAX_FILE_SIZE': 100 * 1024 * 1024,  # 100MB max file size
+    'ALLOWED_EXTENSIONS': [
+        # Images - High quality formats
+        'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'tif', 'svg', 'ico',
+        # Documents
+        'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt',
+        # Videos
+        'mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', 'm4v',
+        # Audio
+        'mp3', 'wav', 'aac', 'flac', 'ogg',
+        # Archives
+        'zip', 'rar', '7z', 'tar', 'gz'
+    ],
     
-#     # Image optimization settings - Preserve original quality
-#     'IMAGE_OPTIMIZATION': {
-#         'quality': 100,  # Maximum quality (no compression)
-#         'format': 'original',  # Keep original format
-#         'fetch_format': 'original',  # Don't convert formats
-#         'flags': 'preserve_transparency',  # Preserve transparency
-#     },
+    # Image optimization settings - Preserve original quality
+    'IMAGE_OPTIMIZATION': {
+        'quality': 100,  # Maximum quality (no compression)
+        'format': 'original',  # Keep original format
+        'fetch_format': 'original',  # Don't convert formats
+        'flags': 'preserve_transparency',  # Preserve transparency
+    },
     
-#     # Additional quality preservation settings
-#     'PRESERVE_EXIF': True,  # Preserve EXIF data
-#     'PRESERVE_METADATA': True,  # Preserve all metadata
-#     'PRESERVE_COLOR_PROFILE': True,  # Preserve color profiles
-#     'PRESERVE_ASPECT_RATIO': True,  # Preserve aspect ratios
-#     'PRESERVE_TRANSPARENCY': True,  # Preserve transparency
-#     'PRESERVE_ANIMATION': True,  # Preserve GIF animations
-# }
+    # Additional quality preservation settings
+    'PRESERVE_EXIF': True,  # Preserve EXIF data
+    'PRESERVE_METADATA': True,  # Preserve all metadata
+    'PRESERVE_COLOR_PROFILE': True,  # Preserve color profiles
+    'PRESERVE_ASPECT_RATIO': True,  # Preserve aspect ratios
+    'PRESERVE_TRANSPARENCY': True,  # Preserve transparency
+    'PRESERVE_ANIMATION': True,  # Preserve GIF animations
+}
 
 # Static files - Keep local for development, can be moved to Cloudinary for production
 STATIC_URL = '/static/'
@@ -204,10 +192,7 @@ STATICFILES_DIRS = [
 
 # Media files - Use Cloudinary for media storage
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
 
 # Optional: Use Cloudinary for static files in production
 # STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
@@ -227,7 +212,6 @@ DEFAULT_AVATARS = {
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',  # Optional
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -252,7 +236,7 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),     # Reduced from 50 to 7 days for security
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
-    'UPDATE_LAST_LOGIN': False,
+    'UPDATE_LAST_LOGIN': True,
 
     # Algorithm and signing
     'ALGORITHM': 'HS256',
@@ -303,7 +287,6 @@ SIMPLE_JWT = {
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True  # Only for development
 CORS_ALLOW_CREDENTIALS = True
-
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",      # React Native development
     "http://localhost:3001",      # Next.js development
@@ -348,14 +331,6 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://vauice-backend.onrender.com',
-    'http://127.0.0.1:3000'
-]
-
-
-
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 
@@ -376,17 +351,6 @@ SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 SESSION_COOKIE_AGE = 3600  # 1 hour
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-
-# Cloudinary configuration
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': env("CLOUDINARY_CLOUD_NAME"),
-    'API_KEY': env("CLOUDINARY_API_KEY"),
-    'API_SECRET': env("CLOUDINARY_API_SECRET"),
-}
-
 
 
 # Logging

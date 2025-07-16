@@ -3,10 +3,6 @@ from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 
-
-
-
-
 class TalentProfile(models.Model):
     """Profile model for Talent users"""
     
@@ -24,9 +20,6 @@ class TalentProfile(models.Model):
         help_text="Years of experience in sports"
     )
 
-    
-
-    
     # Media (Instagram-style)
     profile_picture = models.ImageField(upload_to='talent/profiles/', null=True, blank=True, default="defaults/default-avatar.png")
     cover_photo = models.ImageField(upload_to='talent/covers/', null=True, blank=True)
