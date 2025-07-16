@@ -20,8 +20,6 @@ class TalentPoolAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'added_at',
-        ('mentor__mentor_profile__primary_sport', admin.EmptyFieldListFilter),
-        ('talent__talent_profile__primary_sport', admin.EmptyFieldListFilter),
         ('talent__talent_profile__location', admin.EmptyFieldListFilter),
         'mentor__mentor_profile__is_verified',
         'talent__talent_profile__is_verified',
@@ -29,8 +27,6 @@ class TalentPoolAdmin(admin.ModelAdmin):
     search_fields = [
         'mentor__email', 'mentor__first_name', 'mentor__last_name', 
         'talent__email', 'talent__first_name', 'talent__last_name',
-        'mentor__mentor_profile__primary_sport',
-        'talent__talent_profile__primary_sport',
         'talent__talent_profile__location'
     ]
     readonly_fields = ['added_at']
@@ -143,16 +139,14 @@ class MentorTalentSelectionAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'selected_at',
-        ('mentor__mentor_profile__primary_sport', admin.EmptyFieldListFilter),
-        ('talent__talent_profile__primary_sport', admin.EmptyFieldListFilter),
+        ('talent__talent_profile__location', admin.EmptyFieldListFilter),
         'mentor__mentor_profile__is_verified',
         'talent__talent_profile__is_verified',
     ]
     search_fields = [
         'mentor__email', 'mentor__first_name', 'mentor__last_name', 
         'talent__email', 'talent__first_name', 'talent__last_name',
-        'mentor__mentor_profile__primary_sport',
-        'talent__talent_profile__primary_sport'
+        'talent__talent_profile__location'
     ]
     readonly_fields = ['selected_at']
     ordering = ['-selected_at']
@@ -248,16 +242,14 @@ class MentorTalentRejectionAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'rejected_at',
-        ('mentor__mentor_profile__primary_sport', admin.EmptyFieldListFilter),
-        ('talent__talent_profile__primary_sport', admin.EmptyFieldListFilter),
+        ('talent__talent_profile__location', admin.EmptyFieldListFilter),
         'mentor__mentor_profile__is_verified',
         'talent__talent_profile__is_verified',
     ]
     search_fields = [
         'mentor__email', 'mentor__first_name', 'mentor__last_name', 
         'talent__email', 'talent__first_name', 'talent__last_name',
-        'mentor__mentor_profile__primary_sport',
-        'talent__talent_profile__primary_sport'
+        'talent__talent_profile__location'
     ]
     readonly_fields = ['rejected_at']
     ordering = ['-rejected_at']

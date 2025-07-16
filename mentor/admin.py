@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
-from .models import MentorProfile, MentorPortfolio
+from .models import MentorProfile
 
 class HasSocialLinksFilter(admin.SimpleListFilter):
     title = 'Has Social Links'
@@ -18,22 +18,10 @@ class HasSocialLinksFilter(admin.SimpleListFilter):
             return queryset.filter(social_links={})
         return queryset
 
-class MentorPortfolioInline(admin.StackedInline):
-    model = MentorPortfolio
-    extra = 0
-    readonly_fields = ['created_at', 'updated_at']
-    fieldsets = (
-        (None, {
-            'fields': ('title', 'description', 'sport', 'achievement_type', 'image', 'video_url', 'date_achieved', 'location', 'created_at', 'updated_at')
-        }),
-    )
-
 @admin.register(MentorProfile)
 class MentorProfileAdmin(admin.ModelAdmin):
-    inlines = [MentorPortfolioInline]
     list_display = [
         'mentor_display',
-        'primary_sport',
         'coaching_experience_years',
         'is_verified',
         'is_featured',
@@ -46,7 +34,6 @@ class MentorProfileAdmin(admin.ModelAdmin):
         'is_verified',
         'is_featured',
         'is_available',
-        'primary_sport',
         'coaching_style',
         'availability',
         'created_at',
@@ -58,7 +45,6 @@ class MentorProfileAdmin(admin.ModelAdmin):
         'user__email',
         'user__firstname',
         'user__lastname',
-        'primary_sport',
         'selected_sports',
         'location',
         'bio',
@@ -83,10 +69,10 @@ class MentorProfileAdmin(admin.ModelAdmin):
             'fields': ('bio', 'date_of_birth', 'location')
         }),
         ('Sports Coaching Information', {
-            'fields': ('selected_sports', 'primary_sport', 'coaching_experience_years', 'playing_experience_years', 'expertise_areas', 'certifications', 'education')
+            'fields': ('selected_sports', 'coaching_experience_years', 'playing_experience_years')
         }),
         ('Coaching Information', {
-            'fields': ('coaching_style', 'max_students', 'coaching_levels', 'training_focus')
+            'fields': ('coaching_style', 'max_students', 'coaching_levels')
         }),
         ('Media', {
             'fields': ('profile_picture',),
@@ -176,8 +162,7 @@ class MentorProfileAdmin(admin.ModelAdmin):
     
     def send_completion_reminder(self, request, queryset):
         """Send profile completion reminder"""
-        incomplete_mentors = queryset.filter(is_profile_complete=False)
-        self.message_user(request, f"Profile completion reminder would be sent to {incomplete_mentors.count()} mentors.")
+        self.message_user(request, "Profile completion reminder would be sent to mentors (feature removed).")
     send_completion_reminder.short_description = "Send completion reminder"
     
     # Custom admin methods
