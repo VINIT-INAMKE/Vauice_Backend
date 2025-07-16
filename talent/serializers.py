@@ -25,9 +25,12 @@ class TalentOnboardingSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     views_count = serializers.SerializerMethodField()
+    image = serializers.ImageField(required=False, allow_null=True)
+    video = serializers.FileField(required=False, allow_null=True)
+    caption = serializers.CharField(required=False, allow_blank=True)
     class Meta:
         model = Post
-        fields = ['id', 'talent', 'content', 'created_at', 'updated_at', 'likes_count', 'views_count']
+        fields = ['id', 'talent', 'content', 'image', 'video', 'caption', 'created_at', 'updated_at', 'likes_count', 'views_count']
         read_only_fields = ['id', 'created_at', 'updated_at', 'likes_count', 'views_count']
 
     def get_likes_count(self, obj):

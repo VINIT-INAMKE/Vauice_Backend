@@ -70,6 +70,9 @@ class TalentProfile(models.Model):
 class Post(models.Model):
     talent = models.ForeignKey('TalentProfile', on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(blank=True)
+    image = models.ImageField(upload_to='posts/images/', null=True, blank=True)
+    video = models.FileField(upload_to='posts/videos/', null=True, blank=True)
+    caption = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
