@@ -30,9 +30,9 @@ environ.Env.read_env(env_file=os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG', default=True)
+DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.57.30', '192.168.101.4','vauice-backend.onrender.com']
+ALLOWED_HOSTS = ['vauice-backend.onrender.com','localhost', '127.0.0.1', '192.168.57.30', '192.168.101.4']
 
 
 
