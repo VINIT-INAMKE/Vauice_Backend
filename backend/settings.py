@@ -309,7 +309,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://vauice-backend.onrender.com/',
     'http://127.0.0.1:3000/'
 ]
-
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
