@@ -66,3 +66,45 @@ class TalentProfile(models.Model):
     def save(self, *args, **kwargs):
         # Remove profile completion calculation
         super().save(*args, **kwargs)
+
+class Post(models.Model):
+    talent = models.ForeignKey('TalentProfile', on_delete=models.CASCADE, related_name='posts')
+    content = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('Post')
+        verbose_name_plural = _('Posts')
+        db_table = 'talent_posts'
+
+    def __str__(self):
+        return f"Post by {self.talent.user.get_full_name()} at {self.created_at}"
+
+class PostLike(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='liked_posts')
+    liked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'user')
+        verbose_name = _('Post Like')
+        verbose_name_plural = _('Post Likes')
+        db_table = 'talent_post_likes'
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} liked post {self.post.id}"
+
+class PostView(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='views')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='viewed_posts')
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('post', 'user')
+        verbose_name = _('Post View')
+        verbose_name_plural = _('Post Views')
+        db_table = 'talent_post_views'
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} viewed post {self.post.id}"
