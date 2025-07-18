@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import MentorProfile, SelectedTalent, RejectedTalent
-from talent.models import TalentProfile
+from talent.models import TalentProfile, Post
 
 
 class SelectedTalentSerializer(serializers.ModelSerializer):
@@ -9,6 +9,16 @@ class SelectedTalentSerializer(serializers.ModelSerializer):
         model = SelectedTalent
         fields = ['id', 'talent', 'selected_at']
         read_only_fields = ['id', 'selected_at']
+
+# For ListAvailableTalentsWithPostsAPIView
+class TalentWithPostsSerializer(serializers.Serializer):
+    talent = serializers.IntegerField()
+    posts = serializers.ListField(child=serializers.DictField())
+
+# For PostLikesCountAPIView and PostViewsCountAPIView
+class CountSerializer(serializers.Serializer):
+    post_id = serializers.IntegerField()
+    count = serializers.IntegerField()
 
 class RejectedTalentSerializer(serializers.ModelSerializer):
     talent = serializers.PrimaryKeyRelatedField(queryset=TalentProfile.objects.all())

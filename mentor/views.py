@@ -3,7 +3,10 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .models import MentorProfile, SelectedTalent, RejectedTalent
-from .serializers import MentorOnboardingSerializer, MentorProfileSerializer, SelectedTalentSerializer, RejectedTalentSerializer
+from .serializers import (
+    MentorOnboardingSerializer, MentorProfileSerializer, SelectedTalentSerializer, RejectedTalentSerializer,
+    TalentWithPostsSerializer, CountSerializer
+)
 from talent.models import TalentProfile, Post, PostLike, PostView
 from talent.serializers import TalentProfileSerializer, PostSerializer, PostLikeSerializer, PostViewSerializer
 from rest_framework import permissions
@@ -216,6 +219,8 @@ class AddViewAPIView(generics.CreateAPIView):
 
 class ListAvailableTalentsWithPostsAPIView(generics.ListAPIView):
     permission_classes = [AllowAny]
+    serializer_class = TalentWithPostsSerializer
+
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor profile ID", type=openapi.TYPE_INTEGER, required=True)
     ])
@@ -230,7 +235,6 @@ class ListAvailableTalentsWithPostsAPIView(generics.ListAPIView):
         selected_ids = SelectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)
         rejected_ids = RejectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)
         available_talents = TalentProfile.objects.exclude(id__in=list(selected_ids) + list(rejected_ids))
-        # For each available talent, get their posts
         result = []
         for talent in available_talents:
             posts = Post.objects.filter(talent=talent)
@@ -239,10 +243,12 @@ class ListAvailableTalentsWithPostsAPIView(generics.ListAPIView):
                 'talent': talent.id,
                 'posts': posts_data
             })
-        return Response(result)
+        serializer = self.get_serializer(result, many=True)
+        return Response(serializer.data)
 
 class PostLikesCountAPIView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = CountSerializer
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('post_id', openapi.IN_QUERY, description="Post ID", type=openapi.TYPE_INTEGER, required=True)
@@ -255,10 +261,13 @@ class PostLikesCountAPIView(generics.GenericAPIView):
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        return Response({'post_id': post_id, 'likes_count': post.likes.count()})
+        data = {'post_id': int(post_id), 'count': post.likes.count()}
+        serializer = self.get_serializer(data)
+        return Response(serializer.data)
 
 class PostViewsCountAPIView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = CountSerializer
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('post_id', openapi.IN_QUERY, description="Post ID", type=openapi.TYPE_INTEGER, required=True)
@@ -271,4 +280,6 @@ class PostViewsCountAPIView(generics.GenericAPIView):
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
             return Response({'error': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-        return Response({'post_id': post_id, 'views_count': post.views.count()})
+        data = {'post_id': int(post_id), 'count': post.views.count()}
+        serializer = self.get_serializer(data)
+        return Response(serializer.data)
