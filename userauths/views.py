@@ -76,6 +76,11 @@ class UserProfileView(generics.RetrieveAPIView):
     serializer_class = UserSerializer
     
     def get_object(self):
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty user for schema generation
+            from django.contrib.auth.models import User
+            return User()
         return self.request.user
 
 
