@@ -119,12 +119,12 @@ class MentorProfile(models.Model):
     
     selected_talents = models.ManyToManyField(
         TalentProfile,
-        through='SelectedTalent',
+        through='mentor.SelectedTalent',
         related_name='mentors_selected'
     )
     rejected_talents = models.ManyToManyField(
         TalentProfile,
-        through='RejectedTalent',
+        through='mentor.RejectedTalent',
         related_name='mentors_rejected'
     )
     
