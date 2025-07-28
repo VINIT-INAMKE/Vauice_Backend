@@ -10,6 +10,10 @@ class NotificationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty queryset for schema generation
+            return Notification.objects.none()
         return Notification.objects.filter(recipient=self.request.user)
     
     def list(self, request, *args, **kwargs):
@@ -25,6 +29,10 @@ class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty queryset for schema generation
+            return Notification.objects.none()
         return Notification.objects.filter(recipient=self.request.user)
     
     def update(self, request, *args, **kwargs):
@@ -43,6 +51,10 @@ class MarkAllAsReadView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, *args, **kwargs):
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return success response for schema generation
+            return Response({'message': 'All notifications marked as read'})
         Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
         return Response({'message': 'All notifications marked as read'})
 
@@ -50,5 +62,9 @@ class UnreadNotificationsCountView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return default count for schema generation
+            return Response({'unread_count': 0})
         count = Notification.objects.filter(recipient=request.user, is_read=False).count()
         return Response({'unread_count': count})

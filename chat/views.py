@@ -37,6 +37,10 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Get chat rooms for the current user"""
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty queryset for schema generation
+            return ChatRoom.objects.none()
         return ChatRoom.objects.filter(
             participants=self.request.user,
             is_active=True
@@ -392,6 +396,11 @@ class EncryptionKeyViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """Get encryption keys for users"""
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty queryset for schema generation
+            return EncryptionKey.objects.none()
+            
         user_ids = self.request.query_params.getlist('user_ids')
         if user_ids:
             return EncryptionKey.objects.filter(
@@ -433,6 +442,11 @@ class UserSearchViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         """Search users by username or name"""
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty queryset for schema generation
+            return User.objects.none()
+            
         query = self.request.query_params.get('q', '')
         if not query or len(query) < 2:
             return User.objects.none()
@@ -484,6 +498,11 @@ class UserPresenceViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         """Get presence for users in user's chat rooms"""
+        # Check if this is a schema generation request
+        if getattr(self, 'swagger_fake_view', False):
+            # Return empty queryset for schema generation
+            return UserPresence.objects.none()
+            
         # Get all users that share chat rooms with current user
         user_rooms = ChatRoom.objects.filter(participants=self.request.user)
         shared_users = User.objects.filter(
