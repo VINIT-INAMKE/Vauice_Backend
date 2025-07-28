@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from .models import TalentProfile
-from .serializers import TalentOnboardingSerializer, TalentProfileSerializer
+from .models import TalentProfile, Post
+from .serializers import TalentOnboardingSerializer, TalentProfileSerializer, PostSerializer
+from mentor.models import MentorProfile
+from mentor.serializers import MentorProfileSerializer as MentorProfileDetailSerializer
 
 # Create your views here.
 
@@ -35,3 +37,57 @@ class TalentProfileUpdateAPIView(generics.UpdateAPIView):
         user = self.request.user
         profile, _ = TalentProfile.objects.get_or_create(user=user)
         return profile
+
+
+class MentorProfileAPIView(generics.RetrieveAPIView):
+    """
+    Returns the current user's mentor profile
+    """
+    serializer_class = MentorProfileDetailSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        user = self.request.user
+        profile, _ = MentorProfile.objects.get_or_create(user=user)
+        return profile
+
+
+class TalentProfileAPIView(generics.RetrieveAPIView):
+    """
+    Returns the current user's talent profile
+    """
+    serializer_class = TalentProfileSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_object(self):
+        user = self.request.user
+        profile, _ = TalentProfile.objects.get_or_create(user=user)
+        return profile
+
+
+class TalentOwnPostsAPIView(generics.ListAPIView):
+    """
+    Returns all posts for the logged-in talent user
+    """
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        # Get the talent profile for the current user
+        try:
+            talent_profile = TalentProfile.objects.get(user=user)
+            return Post.objects.filter(talent=talent_profile).select_related('talent__user').prefetch_related('likes', 'views').order_by('-created_at')
+        except TalentProfile.DoesNotExist:
+            return Post.objects.none()
+
+
+class PublicFeedAPIView(generics.ListAPIView):
+    """
+    Public endpoint that returns all posts sorted by creation time (newest first)
+    for an Instagram-like feed
+    """
+    serializer_class = PostSerializer
+    permission_classes = [AllowAny]
+    queryset = Post.objects.select_related('talent__user').prefetch_related('likes', 'views').all()
+    ordering = ['-created_at']

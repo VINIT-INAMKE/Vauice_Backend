@@ -40,6 +40,9 @@ class MentorProfile(models.Model):
     bio = models.TextField(max_length=1000, blank=True, help_text="Tell us about yourself")
     date_of_birth = models.DateField(null=True, blank=True)
     location = models.CharField(max_length=200, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
     
     # Sports Coaching Information
     selected_sports = models.JSONField(default=list, blank=True, help_text="List of selected sports from the 25-30 sports list")

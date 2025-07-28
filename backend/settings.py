@@ -51,10 +51,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'cloudinary_storage',  # Add Cloudinary storage
+    'channels',  # Add Django Channels for WebSocket support
     'userauths',
     'talent',
     'mentor',
     'core',
+    'chat',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -87,6 +90,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+ASGI_APPLICATION = 'backend.asgi.application'
 
 
 # Database
@@ -97,6 +101,26 @@ DATABASES = {
         env("DB_CONN_URL"),
         conn_max_age=600
     )
+}
+
+# Django Channels Configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [env('REDIS_URL', default='redis://localhost:6379')],
+        },
+    },
+}
+
+# Chat Application Settings
+CHAT_SETTINGS = {
+    'MAX_MESSAGE_LENGTH': 4000,
+    'MAX_FILE_SIZE': 50 * 1024 * 1024,  # 50MB
+    'ALLOWED_FILE_TYPES': ['image', 'video', 'audio', 'document'],
+    'MESSAGE_RETENTION_DAYS': 365,
+    'TYPING_INDICATOR_TIMEOUT': 5,  # seconds
+    'ONLINE_STATUS_TIMEOUT': 300,  # 5 minutes
 }
 
 

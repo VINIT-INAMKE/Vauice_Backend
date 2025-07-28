@@ -60,6 +60,8 @@ urlpatterns = [
     path("api/v1/", include("core.urls")),
     path("api/v1/", include("mentor.urls")),
     path("api/v1/", include("talent.urls")),
+    path("api/v1/chat/", include("chat.urls")),
+    path("api/v1/notifications/", include("notifications.urls")),
 
     path("ping/", lambda request: HttpResponse("pong"))
 ]

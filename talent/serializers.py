@@ -6,20 +6,23 @@ class TalentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalentProfile
         fields = [
-            'id', 'user', 'bio', 'date_of_birth', 'location', 'selected_sports',
+            'id', 'user', 'bio', 'date_of_birth', 'location', 'city', 'state', 'country', 'selected_sports',
             'experience_years', 'profile_picture', 'cover_photo', 'is_verified',
             'is_featured', 'social_links', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'date_of_birth', 'city', 'state', 'country', 'selected_sports', 'created_at', 'updated_at']
 
 class TalentOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
         model = TalentProfile
-        fields = ['date_of_birth', 'selected_sports', 'social_links']
+        fields = ['date_of_birth', 'selected_sports', 'social_links', 'city', 'state', 'country']
         extra_kwargs = {
             'date_of_birth': {'help_text': 'Birthdate in YYYY-MM-DD format'},
             'selected_sports': {'help_text': 'List of selected sports (JSON array or object)'},
             'social_links': {'help_text': 'JSON object with keys like facebook, instagram, etc.'},
+            'city': {'help_text': 'City of residence'},
+            'state': {'help_text': 'State of residence'},
+            'country': {'help_text': 'Country of residence'},
         }
 
 class PostSerializer(serializers.ModelSerializer):

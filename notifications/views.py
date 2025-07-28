@@ -1,3 +1,54 @@
-from django.shortcuts import render
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import Notification
+from .serializers import NotificationSerializer
+from django.shortcuts import get_object_or_404
 
-# Create your views here.
+class NotificationListView(generics.ListAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'notifications': serializer.data,
+            'unread_count': queryset.filter(is_read=False).count()
+        })
+
+class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)
+    
+    def update(self, request, *args, **kwargs):
+        notification = self.get_object()
+        notification.is_read = True
+        notification.save()
+        serializer = self.get_serializer(notification)
+        return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        notification = self.get_object()
+        notification.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class MarkAllAsReadView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+        return Response({'message': 'All notifications marked as read'})
+
+class UnreadNotificationsCountView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, *args, **kwargs):
+        count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        return Response({'unread_count': count})

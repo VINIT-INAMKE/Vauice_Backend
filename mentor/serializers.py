@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import MentorProfile, SelectedTalent, RejectedTalent
 from talent.models import TalentProfile, Post
+from talent.serializers import TalentProfileSerializer
 
 
 class SelectedTalentSerializer(serializers.ModelSerializer):
@@ -12,7 +13,21 @@ class SelectedTalentSerializer(serializers.ModelSerializer):
 
 # For ListAvailableTalentsWithPostsAPIView
 class TalentWithPostsSerializer(serializers.Serializer):
-    talent = serializers.IntegerField()
+    talent = TalentProfileSerializer()
+    posts = serializers.ListField(child=serializers.DictField())
+
+# For ListSelectedTalentsAPIView
+class SelectedTalentWithPostsSerializer(serializers.Serializer):
+    talent = TalentProfileSerializer()
+    selected_at = serializers.DateTimeField()
+    chat_room_id = serializers.CharField()
+    can_chat = serializers.BooleanField()
+    posts = serializers.ListField(child=serializers.DictField())
+
+# For ListRejectedTalentsAPIView
+class RejectedTalentWithPostsSerializer(serializers.Serializer):
+    talent = TalentProfileSerializer()
+    rejected_at = serializers.DateTimeField()
     posts = serializers.ListField(child=serializers.DictField())
 
 # For PostLikesCountAPIView and PostViewsCountAPIView
@@ -33,14 +48,17 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = MentorProfile
         fields = '__all__'
-        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at', 'city', 'state', 'country']
 
 class MentorOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
         model = MentorProfile
-        fields = ['date_of_birth', 'selected_sports', 'social_links']
+        fields = ['date_of_birth', 'selected_sports', 'social_links', 'city', 'state', 'country']
         extra_kwargs = {
             'date_of_birth': {'help_text': 'Birthdate in YYYY-MM-DD format'},
             'selected_sports': {'help_text': 'List of selected sports (JSON array or object)'},
             'social_links': {'help_text': 'JSON object with keys like facebook, instagram, etc.'},
+            'city': {'help_text': 'City of residence'},
+            'state': {'help_text': 'State of residence'},
+            'country': {'help_text': 'Country of residence'},
         }

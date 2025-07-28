@@ -27,6 +27,9 @@ class TalentProfileAdmin(admin.ModelAdmin):
         'is_featured',
         'created_date',
         'display_social_links',
+        'city',
+        'state',
+        'country',
     ]
     list_editable = ['is_verified', 'is_featured']
     list_filter = [

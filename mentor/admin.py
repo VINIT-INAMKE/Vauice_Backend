@@ -38,6 +38,9 @@ class MentorProfileAdmin(admin.ModelAdmin):
         'is_available',
         'created_date',
         'display_social_links',
+        'city',
+        'state',
+        'country',
     ]
     list_editable = ['is_verified', 'is_featured', 'is_available']
     list_filter = [
