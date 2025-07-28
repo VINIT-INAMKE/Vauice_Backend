@@ -43,8 +43,6 @@ class RejectedTalentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'rejected_at']
 
 class MentorProfileSerializer(serializers.ModelSerializer):
-    selected_talents = SelectedTalentSerializer(source='selected_talent_links', many=True, read_only=True)
-    rejected_talents = RejectedTalentSerializer(source='rejected_talent_links', many=True, read_only=True)
     class Meta:
         model = MentorProfile
         fields = '__all__'
