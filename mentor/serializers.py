@@ -3,7 +3,7 @@ from .models import MentorProfile, SelectedTalent, RejectedTalent
 from talent.models import TalentProfile, Post
 from talent.serializers import TalentProfileSerializer
 from userauths.serializers import UserSerializer
-from .serializers import PostSerializer
+from talent.serializers import PostSerializer
 
 
 class SelectedTalentSerializer(serializers.ModelSerializer):
