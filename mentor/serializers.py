@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import MentorProfile, SelectedTalent, RejectedTalent
+from .models import MentorProfile
+from core.models import MentorTalentSelection, MentorTalentRejection
 from talent.models import TalentProfile, Post
 from talent.serializers import TalentProfileSerializer
 from userauths.serializers import UserSerializer
@@ -9,7 +10,7 @@ from talent.serializers import PostSerializer
 class SelectedTalentSerializer(serializers.ModelSerializer):
     talent = serializers.PrimaryKeyRelatedField(queryset=TalentProfile.objects.all())
     class Meta:
-        model = SelectedTalent
+        model = MentorTalentSelection
         fields = ['id', 'talent', 'selected_at']
         read_only_fields = ['id', 'selected_at']
 
@@ -53,7 +54,7 @@ class CountSerializer(serializers.Serializer):
 class RejectedTalentSerializer(serializers.ModelSerializer):
     talent = serializers.PrimaryKeyRelatedField(queryset=TalentProfile.objects.all())
     class Meta:
-        model = RejectedTalent
+        model = MentorTalentRejection
         fields = ['id', 'talent', 'rejected_at']
         read_only_fields = ['id', 'rejected_at']
 
@@ -61,7 +62,7 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
         model = MentorProfile
-        exclude = ['selected_talents', 'rejected_talents']
+        fields = '__all__'
         read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at']
 
 class MentorOnboardingSerializer(serializers.ModelSerializer):

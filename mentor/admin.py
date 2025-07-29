@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q
-from .models import MentorProfile, SelectedTalent, RejectedTalent
+from .models import MentorProfile
 
 class HasSocialLinksFilter(admin.SimpleListFilter):
     title = 'Has Social Links'
@@ -18,15 +18,6 @@ class HasSocialLinksFilter(admin.SimpleListFilter):
             return queryset.filter(social_links={})
         return queryset
 
-class SelectedTalentInline(admin.TabularInline):
-    model = SelectedTalent
-    extra = 0
-    autocomplete_fields = ['talent']
-
-class RejectedTalentInline(admin.TabularInline):
-    model = RejectedTalent
-    extra = 0
-    autocomplete_fields = ['talent']
 
 @admin.register(MentorProfile)
 class MentorProfileAdmin(admin.ModelAdmin):
@@ -104,7 +95,6 @@ class MentorProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    inlines = [SelectedTalentInline, RejectedTalentInline]
     def mentor_display(self, obj):
         avatar_html = ""
         if obj.profile_picture:
@@ -184,14 +174,3 @@ class MentorProfileAdmin(admin.ModelAdmin):
         """Optimize queryset with related data"""
         return super().get_queryset(request).select_related('user')
 
-@admin.register(SelectedTalent)
-class SelectedTalentAdmin(admin.ModelAdmin):
-    list_display = ['mentor', 'talent', 'selected_at']
-    search_fields = ['mentor__user__username', 'talent__user__username']
-    autocomplete_fields = ['mentor', 'talent']
-
-@admin.register(RejectedTalent)
-class RejectedTalentAdmin(admin.ModelAdmin):
-    list_display = ['mentor', 'talent', 'rejected_at']
-    search_fields = ['mentor__user__username', 'talent__user__username']
-    autocomplete_fields = ['mentor', 'talent']

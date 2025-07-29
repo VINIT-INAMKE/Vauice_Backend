@@ -42,6 +42,7 @@ class MentorTalentSelection(models.Model):
         related_name='talent_selections',
         limit_choices_to={'user_type': 'mentor'}
     )
+    
     talent = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE, 

@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
-from mentor.models import MentorProfile, SelectedTalent
+from mentor.models import MentorProfile
+from core.models import MentorTalentSelection
 from talent.models import TalentProfile
 from .models import ChatRoom, RoomMembership, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
@@ -45,8 +46,8 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
             )
         
         # Get all selected talents for this mentor
-        selected_talents = SelectedTalent.objects.filter(mentor=mentor_profile)
-        talent_users = [st.talent.user for st in selected_talents]
+        selected_talents = MentorTalentSelection.objects.filter(mentor=user)
+        talent_users = [st.talent for st in selected_talents]
         
         # Get chat rooms with these talents
         chat_rooms = ChatRoom.objects.filter(
@@ -124,8 +125,8 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
             )
         
         # Get all mentors who selected this talent
-        selected_by_mentors = SelectedTalent.objects.filter(talent=talent_profile)
-        mentor_users = [st.mentor.user for st in selected_by_mentors]
+        selected_by_mentors = MentorTalentSelection.objects.filter(talent=user)
+        mentor_users = [st.mentor for st in selected_by_mentors]
         
         # Get chat rooms with these mentors
         chat_rooms = ChatRoom.objects.filter(
@@ -214,7 +215,7 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
             )
         
         # Check if mentor has selected this talent
-        if not SelectedTalent.objects.filter(mentor=mentor_profile, talent=talent_profile).exists():
+        if not MentorTalentSelection.objects.filter(mentor=mentor_user, talent=talent_user).exists():
             return Response(
                 {'error': 'You can only chat with talents you have selected'},
                 status=status.HTTP_403_FORBIDDEN
@@ -285,7 +286,7 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
                 mentor_profile = user.mentor_profile
                 talent_profile = other_user.talent_profile
                 
-                if SelectedTalent.objects.filter(mentor=mentor_profile, talent=talent_profile).exists():
+                if MentorTalentSelection.objects.filter(mentor=user, talent=other_user).exists():
                     can_chat = True
                     reason = "Mentor has selected this talent"
                 else:
@@ -299,7 +300,7 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
                 talent_profile = user.talent_profile
                 mentor_profile = other_user.mentor_profile
                 
-                if SelectedTalent.objects.filter(mentor=mentor_profile, talent=talent_profile).exists():
+                if MentorTalentSelection.objects.filter(mentor=user, talent=other_user).exists():
                     can_chat = True
                     reason = "Talent has been selected by this mentor"
                 else:

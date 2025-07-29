@@ -2,7 +2,9 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import MentorProfile, SelectedTalent, RejectedTalent
+from .models import MentorProfile
+from core.models import TalentPool, MentorTalentSelection, MentorTalentRejection
+from core.serializers import MentorTalentSelectionSerializer, MentorTalentRejectionSerializer, MentorTalentSelectionCreateSerializer, MentorTalentRejectionCreateSerializer
 from .serializers import (
     MentorOnboardingSerializer, MentorProfileSerializer, SelectedTalentSerializer, RejectedTalentSerializer,
     TalentWithPostsSerializer, CountSerializer, SelectedTalentWithPostsSerializer, RejectedTalentWithPostsSerializer
@@ -49,7 +51,7 @@ class MentorProfileUpdateAPIView(generics.UpdateAPIView):
         return profile
 
 class AddSelectedTalentAPIView(generics.CreateAPIView):
-    serializer_class = SelectedTalentSerializer
+    serializer_class = MentorTalentSelectionCreateSerializer
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
@@ -57,46 +59,49 @@ class AddSelectedTalentAPIView(generics.CreateAPIView):
         talent_id = request.data.get('talent_id')
         if not user_id or not talent_id:
             return Response({'error': 'user_id and talent_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
-            mentor = MentorProfile.objects.get(id=user_id)
-            talent = TalentProfile.objects.get(id=talent_id)
-        except (MentorProfile.DoesNotExist, TalentProfile.DoesNotExist):
-            return Response({'error': 'Mentor or Talent not found.'}, status=status.HTTP_404_NOT_FOUND)
+            mentor_user = User.objects.get(id=user_id, user_type='mentor')
+            talent_user = User.objects.get(id=talent_id, user_type='talent')
+        except User.DoesNotExist:
+            return Response({'error': 'Mentor or Talent user not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-        obj, created = SelectedTalent.objects.get_or_create(mentor=mentor, talent=talent)
+        # Create serializer with the user data
+        serializer = self.get_serializer(data={'mentor': mentor_user.id, 'talent': talent_user.id})
+        if serializer.is_valid():
+            # Check if this is a new selection
+            existing = MentorTalentSelection.objects.filter(mentor=mentor_user, talent=talent_user).exists()
+            created = not existing
+            
+            # Create the selection
+            selection = serializer.save()
+            
+            # Handle side effects for new selections
+            if created:
+                # Get profiles for notifications and chat room
+                try:
+                    talent_profile = talent_user.talent_profile
+                    mentor_profile = mentor_user.mentor_profile
+                    
+                    # Create chat room
+                    self._create_mentor_talent_chat_room(mentor_profile, talent_profile)
+                    
+                    # Send notification
+                    try:
+                        send_mentor_selected_talent_notification(mentor_profile, talent_profile)
+                    except Exception as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Error sending mentor selected talent notification: {str(e)}")
+                        
+                except (TalentProfile.DoesNotExist, MentorProfile.DoesNotExist):
+                    pass  # Continue without notifications if profile doesn't exist
+            
+            # Return full selection data using the detailed serializer
+            response_serializer = MentorTalentSelectionSerializer(selection)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
         
-        # Create chat room when talent is selected (only if newly created)
-        if created:
-            self._create_mentor_talent_chat_room(mentor, talent)
-            # Send notification to talent
-            try:
-                send_mentor_selected_talent_notification(mentor, talent)
-            except Exception as e:
-                # Log error but don't fail the talent selection
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error sending mentor selected talent notification: {str(e)}")
-        
-        # Get recent posts for the talent
-        posts = Post.objects.filter(talent=talent)
-        posts_data = PostSerializer(posts, many=True).data
-        
-        # Add chat room info to response
-        chat_room = self._get_existing_chat_room(mentor.user, talent.user)
-        chat_room_id = str(chat_room.id) if chat_room else None
-        can_chat = bool(chat_room)
-        
-        # Create response data with talent object and posts
-        response_data = {
-            'id': obj.id,
-            'talent': TalentProfileSerializer(talent).data,
-            'selected_at': obj.selected_at,
-            'chat_room_id': chat_room_id,
-            'can_chat': can_chat,
-            'posts': posts_data
-        }
-        
-        return Response(response_data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def _create_mentor_talent_chat_room(self, mentor_profile, talent_profile):
         """Create a private chat room between mentor and talent"""
@@ -187,69 +192,39 @@ class AddSelectedTalentAPIView(generics.CreateAPIView):
             return None
 
 class ListSelectedTalentsAPIView(generics.ListAPIView):
-    serializer_class = SelectedTalentWithPostsSerializer
+    serializer_class = MentorTalentSelectionSerializer
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor profile ID", type=openapi.TYPE_INTEGER, required=True)
+        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor User ID", type=openapi.TYPE_INTEGER, required=True)
     ])
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
     def get_queryset(self):
         user_id = self.request.query_params.get('user_id')
         if not user_id:
-            self.error = {'error': 'user_id query parameter is required.'}
-            return TalentProfile.objects.none()
+            return MentorTalentSelection.objects.none()
         try:
-            mentor = MentorProfile.objects.get(id=user_id)
-        except MentorProfile.DoesNotExist:
-            self.error = {'error': 'Mentor profile not found.'}
-            return TalentProfile.objects.none()
+            mentor_user = User.objects.get(id=user_id, user_type='mentor')
+        except User.DoesNotExist:
+            return MentorTalentSelection.objects.none()
         # Get all selected talents with their related data
-        return SelectedTalent.objects.filter(mentor=mentor).select_related('talent')
+        return MentorTalentSelection.objects.filter(mentor=mentor_user).select_related(
+            'talent__talent_profile', 'mentor__mentor_profile'
+        ).prefetch_related('talent__talent_profile__posts')
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        if hasattr(self, 'error'):
-            return Response(self.error, status=status.HTTP_400_BAD_REQUEST)
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        result = []
-        for selected_talent in queryset:
-            talent = selected_talent.talent
-            # Get recent posts for the talent
-            posts = Post.objects.filter(talent=talent)
-            posts_data = PostSerializer(posts, many=True).data
-            
-            # Get chat room info
-            chat_room_id = None
-            can_chat = False
-            try:
-                chat_room = ChatRoom.objects.filter(
-                    room_type='private',
-                    participants=selected_talent.mentor.user
-                ).filter(
-                    participants=talent.user
-                ).first()
-                if chat_room:
-                    chat_room_id = str(chat_room.id)
-                    can_chat = True
-            except ChatRoom.DoesNotExist:
-                pass
-            
-            result.append({
-                'talent': TalentProfileSerializer(talent).data,
-                'selected_at': selected_talent.selected_at,
-                'chat_room_id': chat_room_id,
-                'can_chat': can_chat,
-                'posts': posts_data
-            })
+        try:
+            User.objects.get(id=user_id, user_type='mentor')
+        except User.DoesNotExist:
+            return Response({'error': 'Mentor user not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = self.get_serializer(result, many=True)
-        return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
 
 class AddRejectedTalentAPIView(generics.CreateAPIView):
-    serializer_class = RejectedTalentSerializer
+    serializer_class = MentorTalentRejectionCreateSerializer
     permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
@@ -257,80 +232,78 @@ class AddRejectedTalentAPIView(generics.CreateAPIView):
         talent_id = request.data.get('talent_id')
         if not user_id or not talent_id:
             return Response({'error': 'user_id and talent_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
-            mentor = MentorProfile.objects.get(id=user_id)
-            talent = TalentProfile.objects.get(id=talent_id)
-        except (MentorProfile.DoesNotExist, TalentProfile.DoesNotExist):
-            return Response({'error': 'Mentor or Talent not found.'}, status=status.HTTP_404_NOT_FOUND)
-        obj, created = RejectedTalent.objects.get_or_create(mentor=mentor, talent=talent)
+            mentor_user = User.objects.get(id=user_id, user_type='mentor')
+            talent_user = User.objects.get(id=talent_id, user_type='talent')
+        except User.DoesNotExist:
+            return Response({'error': 'Mentor or Talent user not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Send notification to talent when rejected (only if newly created)
-        if created:
-            try:
-                send_talent_rejected_notification(mentor, talent)
-            except Exception as e:
-                # Log error but don't fail the talent rejection
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error sending talent rejected notification: {str(e)}")
+        # Create serializer with the user data
+        serializer = self.get_serializer(data={'mentor': mentor_user.id, 'talent': talent_user.id})
+        if serializer.is_valid():
+            # Check if this is a new rejection
+            existing = MentorTalentRejection.objects.filter(mentor=mentor_user, talent=talent_user).exists()
+            created = not existing
+            
+            # Create the rejection
+            rejection = serializer.save()
+            
+            # Handle side effects for new rejections
+            if created:
+                # Get profiles for notifications
+                try:
+                    talent_profile = talent_user.talent_profile
+                    mentor_profile = mentor_user.mentor_profile
+                    
+                    # Send notification
+                    try:
+                        send_talent_rejected_notification(mentor_profile, talent_profile)
+                    except Exception as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Error sending talent rejected notification: {str(e)}")
+                        
+                except (TalentProfile.DoesNotExist, MentorProfile.DoesNotExist):
+                    pass  # Continue without notifications if profile doesn't exist
+            
+            # Return full rejection data using the detailed serializer
+            response_serializer = MentorTalentRejectionSerializer(rejection)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
         
-        # Get recent posts for the talent
-        posts = Post.objects.filter(talent=talent)
-        posts_data = PostSerializer(posts, many=True).data
-        
-        # Create response data with talent object and posts
-        response_data = {
-            'id': obj.id,
-            'talent': TalentProfileSerializer(talent).data,
-            'rejected_at': obj.rejected_at,
-            'posts': posts_data
-        }
-        
-        return Response(response_data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ListRejectedTalentsAPIView(generics.ListAPIView):
-    serializer_class = RejectedTalentWithPostsSerializer
+    serializer_class = MentorTalentRejectionSerializer
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor profile ID", type=openapi.TYPE_INTEGER, required=True)
+        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor User ID", type=openapi.TYPE_INTEGER, required=True)
     ])
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
-
     def get_queryset(self):
         user_id = self.request.query_params.get('user_id')
         if not user_id:
-            self.error = {'error': 'user_id query parameter is required.'}
-            return TalentProfile.objects.none()
+            return MentorTalentRejection.objects.none()
         try:
-            mentor = MentorProfile.objects.get(id=user_id)
-        except MentorProfile.DoesNotExist:
-            self.error = {'error': 'Mentor profile not found.'}
-            return TalentProfile.objects.none()
+            mentor_user = User.objects.get(id=user_id, user_type='mentor')
+        except User.DoesNotExist:
+            return MentorTalentRejection.objects.none()
         # Get all rejected talents with their related data
-        return RejectedTalent.objects.filter(mentor=mentor).select_related('talent')
+        return MentorTalentRejection.objects.filter(mentor=mentor_user).select_related(
+            'talent__talent_profile', 'mentor__mentor_profile'
+        ).prefetch_related('talent__talent_profile__posts')
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        if hasattr(self, 'error'):
-            return Response(self.error, status=status.HTTP_400_BAD_REQUEST)
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        result = []
-        for rejected_talent in queryset:
-            talent = rejected_talent.talent
-            # Get recent posts for the talent
-            posts = Post.objects.filter(talent=talent)
-            posts_data = PostSerializer(posts, many=True).data
-            
-            result.append({
-                'talent': TalentProfileSerializer(talent).data,
-                'rejected_at': rejected_talent.rejected_at,
-                'posts': posts_data
-            })
+        try:
+            User.objects.get(id=user_id, user_type='mentor')
+        except User.DoesNotExist:
+            return Response({'error': 'Mentor user not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-        serializer = self.get_serializer(result, many=True)
-        return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
 
 
 
@@ -379,23 +352,25 @@ class AddViewAPIView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 class ListAvailableTalentsWithPostsAPIView(generics.ListAPIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = TalentWithPostsSerializer
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor profile ID", type=openapi.TYPE_INTEGER, required=True)
-    ])
     def get(self, request, *args, **kwargs):
-        user_id = request.query_params.get('user_id')
-        if not user_id:
-            return Response({'error': 'user_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            mentor = MentorProfile.objects.get(user__id=user_id)
-        except MentorProfile.DoesNotExist:
-            return Response({'error': 'Mentor profile not found.'}, status=status.HTTP_400_BAD_REQUEST)
-        selected_ids = SelectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)
-        rejected_ids = RejectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)
-        available_talents = TalentProfile.objects.exclude(id__in=list(selected_ids) + list(rejected_ids))
+        # Use authenticated user instead of query parameter
+        mentor_user = request.user
+        
+        # Verify user is a mentor
+        if mentor_user.user_type != 'mentor':
+            return Response({'error': 'Only mentors can access talent pool.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get talent User IDs from the authenticated mentor's TalentPool
+        talent_user_ids = TalentPool.objects.filter(mentor=mentor_user).values_list('talent_id', flat=True)
+        
+        # Get TalentProfiles with related data for those users
+        available_talents = TalentProfile.objects.filter(
+            user_id__in=talent_user_ids
+        ).select_related('user').prefetch_related('posts')
+        
         serializer = self.get_serializer(available_talents, many=True)
         return Response(serializer.data)
 
@@ -445,13 +420,13 @@ class MentorsWhoSelectedTalentAPIView(APIView):
 
     def get(self, request, user_id):
         try:
-            talent_profile = TalentProfile.objects.get(user__id=user_id)
-        except TalentProfile.DoesNotExist:
-            return Response({'detail': 'Talent profile not found'}, status=status.HTTP_404_NOT_FOUND)
-        selected_qs = SelectedTalent.objects.filter(talent=talent_profile).select_related('mentor__user')
+            talent_user = User.objects.get(id=user_id, user_type='talent')
+        except User.DoesNotExist:
+            return Response({'detail': 'Talent user not found'}, status=status.HTTP_404_NOT_FOUND)
+        selected_qs = MentorTalentSelection.objects.filter(talent=talent_user).select_related('mentor__mentor_profile')
         result = []
         for selected in selected_qs:
-            mentor_data = MentorProfileSerializer(selected.mentor).data
+            mentor_data = MentorProfileSerializer(selected.mentor.mentor_profile).data
             result.append({
                 'mentor': mentor_data,
                 'selected_at': selected.selected_at

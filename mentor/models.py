@@ -4,33 +4,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from talent.models import TalentProfile
 
-class SelectedTalent(models.Model):
-    mentor = models.ForeignKey('MentorProfile', on_delete=models.CASCADE, related_name='selected_talent_links')
-    talent = models.ForeignKey(TalentProfile, on_delete=models.CASCADE, related_name='selected_by_mentor_links')
-    selected_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('mentor', 'talent')
-        verbose_name = _('Selected Talent')
-        verbose_name_plural = _('Selected Talents')
-        db_table = 'selected_talents'
-
-    def __str__(self):
-        return f"{self.mentor.user.get_full_name()} selected {self.talent.user.get_full_name()}"
-
-class RejectedTalent(models.Model):
-    mentor = models.ForeignKey('MentorProfile', on_delete=models.CASCADE, related_name='rejected_talent_links')
-    talent = models.ForeignKey(TalentProfile, on_delete=models.CASCADE, related_name='rejected_by_mentor_links')
-    rejected_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ('mentor', 'talent')
-        verbose_name = _('Rejected Talent')
-        verbose_name_plural = _('Rejected Talents')
-        db_table = 'rejected_talents'
-
-    def __str__(self):
-        return f"{self.mentor.user.get_full_name()} rejected {self.talent.user.get_full_name()}"
 
 class MentorProfile(models.Model):
     """Profile model for Mentor users"""
@@ -117,16 +90,6 @@ class MentorProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    selected_talents = models.ManyToManyField(
-        TalentProfile,
-        through='SelectedTalent',
-        related_name='mentors_selected'
-    )
-    rejected_talents = models.ManyToManyField(
-        TalentProfile,
-        through='RejectedTalent',
-        related_name='mentors_rejected'
-    )
     
     class Meta:
         verbose_name = _('Mentor Profile')

@@ -4,22 +4,22 @@ Django signals to automatically create chat rooms when mentor selects talent
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
-from mentor.models import SelectedTalent
+from core.models import MentorTalentSelection
 from .models import ChatRoom, RoomMembership
 import logging
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
-@receiver(post_save, sender=SelectedTalent)
+@receiver(post_save, sender=MentorTalentSelection)
 def create_mentor_talent_chat_room(sender, instance, created, **kwargs):
     """
     Automatically create a private chat room when a mentor selects a talent
     """
     if created:  # Only when a new selection is made
         try:
-            mentor_user = instance.mentor.user
-            talent_user = instance.talent.user
+            mentor_user = instance.mentor
+            talent_user = instance.talent
             
             # Check if a chat room already exists between these users
             existing_room = ChatRoom.objects.filter(
