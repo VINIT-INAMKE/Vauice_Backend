@@ -15,7 +15,6 @@ class TalentPoolAdmin(admin.ModelAdmin):
         'talent_display', 
         'talent_sports', 
         'talent_location',
-        'talent_completion_status',
         'added_at_formatted'
     ]
     list_filter = [
@@ -69,9 +68,18 @@ class TalentPoolAdmin(admin.ModelAdmin):
     def talent_sports(self, obj):
         """Display talent's sports"""
         sports = obj.talent.talent_profile.selected_sports
-        if sports:
-            return ", ".join(sports[:3]) + ("..." if len(sports) > 3 else "")
-        return "No sports selected"
+        if not sports:
+            return "No sports selected"
+        # If sports is a string (comma-separated), split it
+        if isinstance(sports, str):
+            sports = [s.strip() for s in sports.split(",") if s.strip()]
+        # If sports is a dict, get values
+        if isinstance(sports, dict):
+            sports = list(sports.values())
+        # If sports is not a list, make it a list
+        if not isinstance(sports, list):
+            sports = [str(sports)]
+        return ", ".join(sports[:3]) + ("..." if len(sports) > 3 else "")
     talent_sports.short_description = "Talent Sports"
     
     def talent_location(self, obj):
@@ -79,26 +87,6 @@ class TalentPoolAdmin(admin.ModelAdmin):
         location = obj.talent.talent_profile.location
         return location if location else "Location not set"
     talent_location.short_description = "Location"
-    
-    def talent_completion_status(self, obj):
-        """Display talent's profile completion with color coding"""
-        completion = obj.talent.talent_profile.profile_completion_percentage
-        if completion == 100:
-            color = "green"
-            icon = "✅"
-        elif completion >= 80:
-            color = "orange"
-            icon = "⚠️"
-        else:
-            color = "red"
-            icon = "❌"
-        
-        return format_html(
-            '<span style="color: {};">{} {}%</span>',
-            color, icon, completion
-        )
-    talent_completion_status.short_description = "Profile Completion"
-    talent_completion_status.admin_order_field = 'talent__talent_profile__profile_completion_percentage'
     
     def added_at_formatted(self, obj):
         """Display formatted date"""

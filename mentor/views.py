@@ -14,6 +14,8 @@ from notifications.utils import send_mentor_selected_talent_notification, send_t
 from rest_framework import permissions
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from rest_framework.views import APIView
+from userauths.models import User
 
 # Create your views here.
 
@@ -442,3 +444,24 @@ class PostViewsCountAPIView(generics.GenericAPIView):
         data = {'post_id': int(post_id), 'count': post.views.count()}
         serializer = self.get_serializer(data)
         return Response(serializer.data)
+
+class MentorsWhoSelectedTalentAPIView(APIView):
+    """
+    Returns all mentor profiles (with selected_at) who have selected the given talent (by user_id)
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        try:
+            talent_profile = TalentProfile.objects.get(user__id=user_id)
+        except TalentProfile.DoesNotExist:
+            return Response({'detail': 'Talent profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        selected_qs = SelectedTalent.objects.filter(talent=talent_profile).select_related('mentor__user')
+        result = []
+        for selected in selected_qs:
+            mentor_data = MentorProfileSerializer(selected.mentor).data
+            result.append({
+                'mentor': mentor_data,
+                'selected_at': selected.selected_at
+            })
+        return Response(result)

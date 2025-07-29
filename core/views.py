@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import get_user_model
 from rest_framework import status
+from core.models import MentorTalentSelection
+from mentor.models import MentorProfile
+from mentor.serializers import MentorProfileSerializer
 
 # Famous and most played sports list as a dict for JSON response
 SPORTS_LIST = {
@@ -55,3 +58,19 @@ class OnboardingStatusAPIView(APIView):
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"onboarding_done": user.onboarding_done})
+
+class MentorsWhoSelectedTalentAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id):
+        selections = MentorTalentSelection.objects.filter(talent__id=user_id).select_related('mentor__mentor_profile')
+        result = []
+        for selection in selections:
+            mentor_profile = getattr(selection.mentor, 'mentor_profile', None)
+            if mentor_profile:
+                mentor_data = MentorProfileSerializer(mentor_profile).data
+                result.append({
+                    'mentor': mentor_data,
+                    'selected_at': selection.selected_at
+                })
+        return Response(result)

@@ -14,6 +14,7 @@ from .views import (
     ListAvailableTalentsWithPostsAPIView,
     PostLikesCountAPIView,
     PostViewsCountAPIView,
+    MentorsWhoSelectedTalentAPIView,
 )
 
 urlpatterns = [
@@ -35,4 +36,5 @@ urlpatterns = [
     path('posts/view/', AddViewAPIView.as_view(), name='add-view'),
     path('posts/likes-count/', PostLikesCountAPIView.as_view(), name='post-likes-count'),
     path('posts/views-count/', PostViewsCountAPIView.as_view(), name='post-views-count'),
+    path('mentors/selected-talent/<int:user_id>/', MentorsWhoSelectedTalentAPIView.as_view(), name='mentors-who-selected-talent'),
 ]
