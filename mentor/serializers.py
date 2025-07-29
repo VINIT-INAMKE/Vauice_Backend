@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import MentorProfile, SelectedTalent, RejectedTalent
 from talent.models import TalentProfile, Post
 from talent.serializers import TalentProfileSerializer
+from userauths.serializers import UserSerializer
 
 
 class SelectedTalentSerializer(serializers.ModelSerializer):
@@ -43,6 +44,7 @@ class RejectedTalentSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'rejected_at']
 
 class MentorProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = MentorProfile
         exclude = ['selected_talents', 'rejected_talents']

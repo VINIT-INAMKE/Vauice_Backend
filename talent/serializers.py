@@ -1,16 +1,13 @@
 from rest_framework import serializers
 from .models import TalentProfile, Post, PostLike, PostView
+from userauths.serializers import UserSerializer
 
 
 class TalentProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
     class Meta:
         model = TalentProfile
-        fields = [
-            'id', 'user', 'bio', 'date_of_birth', 'location', 'city', 'state', 'country', 'selected_sports',
-            'experience_years', 'profile_picture', 'cover_photo', 'is_verified',
-            'is_featured', 'social_links', 'created_at', 'updated_at'
-        ]
-        read_only_fields = ['id', 'user', 'date_of_birth', 'city', 'state', 'country', 'selected_sports', 'created_at', 'updated_at']
+        fields = '__all__'
 
 class TalentOnboardingSerializer(serializers.ModelSerializer):
     class Meta:
