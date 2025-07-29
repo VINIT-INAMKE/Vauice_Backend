@@ -3,6 +3,7 @@ from .models import MentorProfile, SelectedTalent, RejectedTalent
 from talent.models import TalentProfile, Post
 from talent.serializers import TalentProfileSerializer
 from userauths.serializers import UserSerializer
+from .serializers import PostSerializer
 
 
 class SelectedTalentSerializer(serializers.ModelSerializer):
@@ -15,7 +16,11 @@ class SelectedTalentSerializer(serializers.ModelSerializer):
 # For ListAvailableTalentsWithPostsAPIView
 class TalentWithPostsSerializer(serializers.Serializer):
     talent = TalentProfileSerializer()
-    posts = serializers.ListField(child=serializers.DictField())
+    posts = serializers.SerializerMethodField()
+
+    def get_posts(self, obj):
+        posts = Post.objects.filter(talent=obj)
+        return PostSerializer(posts, many=True).data
 
 # For ListSelectedTalentsAPIView
 class SelectedTalentWithPostsSerializer(serializers.Serializer):

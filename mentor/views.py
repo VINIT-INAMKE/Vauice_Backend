@@ -396,15 +396,7 @@ class ListAvailableTalentsWithPostsAPIView(generics.ListAPIView):
         selected_ids = SelectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)
         rejected_ids = RejectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)
         available_talents = TalentProfile.objects.exclude(id__in=list(selected_ids) + list(rejected_ids))
-        result = []
-        for talent in available_talents:
-            posts = Post.objects.filter(talent=talent)
-            posts_data = PostSerializer(posts, many=True).data
-            result.append({
-                'talent': TalentProfileSerializer(talent).data,
-                'posts': posts_data
-            })
-        serializer = self.get_serializer(result, many=True)
+        serializer = self.get_serializer(available_talents, many=True)
         return Response(serializer.data)
 
 class PostLikesCountAPIView(generics.GenericAPIView):
