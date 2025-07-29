@@ -6,10 +6,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+docs/
 # C extensions
 *.so
-
+staticfiles/
+.claude/
 # Distribution / packaging
 .Python
 build/
