@@ -42,10 +42,6 @@ class MentorProfileUpdateAPIView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty profile for schema generation
-            return MentorProfile()
         user = self.request.user
         profile, _ = MentorProfile.objects.get_or_create(user=user)
         return profile

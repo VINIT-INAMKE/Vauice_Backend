@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Notification
 from .serializers import NotificationSerializer
 from django.shortcuts import get_object_or_404
@@ -10,9 +11,7 @@ class NotificationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        # Check if this is a schema generation request
         if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
             return Notification.objects.none()
         return Notification.objects.filter(recipient=self.request.user)
     
@@ -29,9 +28,7 @@ class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        # Check if this is a schema generation request
         if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
             return Notification.objects.none()
         return Notification.objects.filter(recipient=self.request.user)
     
@@ -47,24 +44,16 @@ class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
         notification.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class MarkAllAsReadView(generics.GenericAPIView):
+class MarkAllAsReadView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, *args, **kwargs):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return success response for schema generation
-            return Response({'message': 'All notifications marked as read'})
         Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
         return Response({'message': 'All notifications marked as read'})
 
-class UnreadNotificationsCountView(generics.GenericAPIView):
+class UnreadNotificationsCountView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, *args, **kwargs):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return default count for schema generation
-            return Response({'unread_count': 0})
         count = Notification.objects.filter(recipient=request.user, is_read=False).count()
         return Response({'unread_count': count})

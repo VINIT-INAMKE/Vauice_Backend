@@ -34,10 +34,6 @@ class TalentProfileUpdateAPIView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty profile for schema generation
-            return TalentProfile()
         user = self.request.user
         profile, _ = TalentProfile.objects.get_or_create(user=user)
         return profile
@@ -51,10 +47,6 @@ class MentorProfileAPIView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_object(self):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty profile for schema generation
-            return MentorProfile()
         user = self.request.user
         profile, _ = MentorProfile.objects.get_or_create(user=user)
         return profile
@@ -68,10 +60,6 @@ class TalentProfileAPIView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_object(self):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty profile for schema generation
-            return TalentProfile()
         user = self.request.user
         profile, _ = TalentProfile.objects.get_or_create(user=user)
         return profile
@@ -85,10 +73,6 @@ class TalentOwnPostsAPIView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
-            return Post.objects.none()
         user = self.request.user
         # Get the talent profile for the current user
         try:

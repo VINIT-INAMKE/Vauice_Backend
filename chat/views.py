@@ -1,6 +1,6 @@
-from rest_framework import viewsets, status, permissions
-from rest_framework.decorators import action
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.contrib.auth import get_user_model
 from django.db.models import Q, Prefetch
@@ -26,21 +26,17 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 channel_layer = get_channel_layer()
 
-class ChatRoomViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing chat rooms"""
+class ChatRoomListView(generics.ListCreateAPIView):
+    """List and create chat rooms"""
     permission_classes = [permissions.IsAuthenticated]
     
     def get_serializer_class(self):
-        if self.action == 'create':
+        if hasattr(self, 'request') and self.request and self.request.method == 'POST':
             return ChatRoomCreateSerializer
         return ChatRoomSerializer
     
     def get_queryset(self):
         """Get chat rooms for the current user"""
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
-            return ChatRoom.objects.none()
         return ChatRoom.objects.filter(
             participants=self.request.user,
             is_active=True
@@ -104,11 +100,26 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             ChatRoomSerializer(room).data,
             status=status.HTTP_201_CREATED
         )
+
+class ChatRoomDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a chat room"""
+    serializer_class = ChatRoomSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
-    @action(detail=True, methods=['post'])
-    def invite_users(self, request, pk=None):
-        """Invite users to a chat room"""
-        room = self.get_object()
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return ChatRoom.objects.none()
+        return ChatRoom.objects.filter(
+            participants=self.request.user,
+            is_active=True
+        )
+
+class ChatRoomInviteView(APIView):
+    """Invite users to a chat room"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, pk):
+        room = get_object_or_404(ChatRoom, pk=pk, participants=request.user)
         
         # Check if user has permission to invite (admin or owner)
         membership = get_object_or_404(
@@ -161,11 +172,13 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
             {'message': f'{len(new_users)} users invited successfully'},
             status=status.HTTP_200_OK
         )
+
+class ChatRoomLeaveView(APIView):
+    """Leave a chat room"""
+    permission_classes = [permissions.IsAuthenticated]
     
-    @action(detail=True, methods=['post'])
-    def leave(self, request, pk=None):
-        """Leave a chat room"""
-        room = self.get_object()
+    def post(self, request, pk):
+        room = get_object_or_404(ChatRoom, pk=pk, participants=request.user)
         
         try:
             membership = RoomMembership.objects.get(
@@ -203,13 +216,13 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-class MessageViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing messages"""
+class MessageListView(generics.ListCreateAPIView):
+    """List messages for a room and create new messages"""
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser, FormParser]
     
     def get_serializer_class(self):
-        if self.action == 'create':
+        if hasattr(self, 'request') and self.request and self.request.method == 'POST':
             return MessageCreateSerializer
         return MessageSerializer
     
@@ -298,30 +311,18 @@ class MessageViewSet(viewsets.ModelViewSet):
             MessageSerializer(message).data,
             status=status.HTTP_201_CREATED
         )
+
+class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a message"""
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
     
-    @action(detail=False, methods=['post'])
-    def mark_as_read(self, request):
-        """Mark messages as read"""
-        serializer = MessageReadSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        message_ids = serializer.validated_data['message_ids']
-        messages = Message.objects.filter(
-            id__in=message_ids,
-            room__participants=request.user
-        )
-        
-        # Update or create message statuses
-        for message in messages:
-            MessageStatus.objects.update_or_create(
-                message=message,
-                user=request.user,
-                defaults={'status': 'read'}
-            )
-        
-        return Response(
-            {'message': f'{len(messages)} messages marked as read'},
-            status=status.HTTP_200_OK
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Message.objects.none()
+        return Message.objects.filter(
+            room__participants=self.request.user,
+            is_deleted=False
         )
     
     def update(self, request, *args, **kwargs):
@@ -385,22 +386,44 @@ class MessageViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-class EncryptionKeyViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing encryption keys"""
+class MessageMarkAsReadView(APIView):
+    """Mark messages as read"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = MessageReadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        message_ids = serializer.validated_data['message_ids']
+        messages = Message.objects.filter(
+            id__in=message_ids,
+            room__participants=request.user
+        )
+        
+        # Update or create message statuses
+        for message in messages:
+            MessageStatus.objects.update_or_create(
+                message=message,
+                user=request.user,
+                defaults={'status': 'read'}
+            )
+        
+        return Response(
+            {'message': f'{len(messages)} messages marked as read'},
+            status=status.HTTP_200_OK
+        )
+
+class EncryptionKeyListView(generics.ListCreateAPIView):
+    """List and create encryption keys"""
     permission_classes = [permissions.IsAuthenticated]
     
     def get_serializer_class(self):
-        if self.action == 'create':
+        if hasattr(self, 'request') and self.request and self.request.method == 'POST':
             return EncryptionKeyCreateSerializer
         return EncryptionKeySerializer
     
     def get_queryset(self):
         """Get encryption keys for users"""
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
-            return EncryptionKey.objects.none()
-            
         user_ids = self.request.query_params.getlist('user_ids')
         if user_ids:
             return EncryptionKey.objects.filter(
@@ -435,18 +458,13 @@ class EncryptionKeyViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
-class UserSearchViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for searching users"""
+class UserSearchView(generics.ListAPIView):
+    """Search users by username or name"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSearchSerializer
     
     def get_queryset(self):
         """Search users by username or name"""
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
-            return User.objects.none()
-            
         query = self.request.query_params.get('q', '')
         if not query or len(query) < 2:
             return User.objects.none()
@@ -459,13 +477,12 @@ class UserSearchViewSet(viewsets.ReadOnlyModelViewSet):
             id=self.request.user.id
         ).select_related('presence')[:20]
 
-class FileUploadViewSet(viewsets.ViewSet):
-    """ViewSet for handling file uploads"""
+class FileUploadView(APIView):
+    """Handle file uploads for chat"""
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
     
-    def create(self, request):
-        """Upload a file for chat"""
+    def post(self, request):
         serializer = FileUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
@@ -491,18 +508,13 @@ class FileUploadViewSet(viewsets.ViewSet):
             'file_type': attachment.file_type
         }, status=status.HTTP_201_CREATED)
 
-class UserPresenceViewSet(viewsets.ReadOnlyModelViewSet):
-    """ViewSet for user presence information"""
+class UserPresenceListView(generics.ListAPIView):
+    """Get user presence information"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserPresenceSerializer
     
     def get_queryset(self):
         """Get presence for users in user's chat rooms"""
-        # Check if this is a schema generation request
-        if getattr(self, 'swagger_fake_view', False):
-            # Return empty queryset for schema generation
-            return UserPresence.objects.none()
-            
         # Get all users that share chat rooms with current user
         user_rooms = ChatRoom.objects.filter(participants=self.request.user)
         shared_users = User.objects.filter(

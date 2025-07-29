@@ -11,6 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        ref_name = 'NotificationUser'
 
 class NotificationSerializer(serializers.ModelSerializer):
     recipient = UserSerializer(read_only=True)
