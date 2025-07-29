@@ -390,7 +390,7 @@ class ListAvailableTalentsWithPostsAPIView(generics.ListAPIView):
         if not user_id:
             return Response({'error': 'user_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            mentor = MentorProfile.objects.get(id=user_id)
+            mentor = MentorProfile.objects.get(user__id=user_id)
         except MentorProfile.DoesNotExist:
             return Response({'error': 'Mentor profile not found.'}, status=status.HTTP_400_BAD_REQUEST)
         selected_ids = SelectedTalent.objects.filter(mentor=mentor).values_list('talent', flat=True)

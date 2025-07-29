@@ -15,10 +15,19 @@ class SelectedTalentSerializer(serializers.ModelSerializer):
 
 # For ListAvailableTalentsWithPostsAPIView
 class TalentWithPostsSerializer(serializers.Serializer):
-    talent = TalentProfileSerializer()
     posts = serializers.SerializerMethodField()
 
+    def to_representation(self, obj):
+        from talent.serializers import TalentProfileSerializer
+        data = {
+            'talent': TalentProfileSerializer(obj).data,
+            'posts': self.get_posts(obj)
+        }
+        return data
+
     def get_posts(self, obj):
+        from talent.models import Post
+        from talent.serializers import PostSerializer
         posts = Post.objects.filter(talent=obj)
         return PostSerializer(posts, many=True).data
 
