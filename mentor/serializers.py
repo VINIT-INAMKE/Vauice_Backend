@@ -46,7 +46,7 @@ class MentorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = MentorProfile
         exclude = ['selected_talents', 'rejected_talents']
-        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at', 'city', 'state', 'country']
+        read_only_fields = ['id', 'user', 'date_of_birth', 'selected_sports', 'created_at', 'updated_at']
 
 class MentorOnboardingSerializer(serializers.ModelSerializer):
     class Meta:

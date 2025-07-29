@@ -41,27 +41,33 @@ class TalentProfileUpdateAPIView(generics.UpdateAPIView):
 
 class MentorProfileAPIView(generics.RetrieveAPIView):
     """
-    Returns the current user's mentor profile
+    Returns the mentor profile for a given user ID
     """
     serializer_class = MentorProfileDetailSerializer
-    permission_classes = [IsAuthenticated]
-    
+    permission_classes = [AllowAny]
+
     def get_object(self):
-        user = self.request.user
-        profile, _ = MentorProfile.objects.get_or_create(user=user)
+        user_id = self.kwargs.get('user_id')
+        profile = MentorProfile.objects.filter(user__id=user_id).first()
+        if not profile:
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Mentor profile not found')
         return profile
 
 
 class TalentProfileAPIView(generics.RetrieveAPIView):
     """
-    Returns the current user's talent profile
+    Returns the talent profile for a given user ID
     """
     serializer_class = TalentProfileSerializer
-    permission_classes = [IsAuthenticated]
-    
+    permission_classes = [AllowAny]
+
     def get_object(self):
-        user = self.request.user
-        profile, _ = TalentProfile.objects.get_or_create(user=user)
+        user_id = self.kwargs.get('user_id')
+        profile = TalentProfile.objects.filter(user__id=user_id).first()
+        if not profile:
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Talent profile not found')
         return profile
 
 
