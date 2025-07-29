@@ -65,7 +65,7 @@ class TalentProfileAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('Basic Information', {
-            'fields': ('bio', 'date_of_birth', 'location')
+            'fields': ('bio', 'date_of_birth', 'location', 'city', 'state', 'country')
         }),
         ('Sports Information', {
             'fields': ('selected_sports', 'experience_years')

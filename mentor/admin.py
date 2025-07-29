@@ -79,7 +79,7 @@ class MentorProfileAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('Basic Information', {
-            'fields': ('bio', 'date_of_birth', 'location')
+            'fields': ('bio', 'date_of_birth', 'location', 'city', 'state', 'country')
         }),
         ('Sports Coaching Information', {
             'fields': ('selected_sports', 'coaching_experience_years', 'playing_experience_years')
