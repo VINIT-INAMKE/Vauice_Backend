@@ -60,10 +60,17 @@ class OnboardingStatusAPIView(APIView):
         return Response({"onboarding_done": user.onboarding_done})
 
 class MentorsWhoSelectedTalentAPIView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request, user_id):
-        selections = MentorTalentSelection.objects.filter(talent__id=user_id).select_related('mentor__mentor_profile')
+    def get(self, request):
+        # Use authenticated user instead of user_id parameter
+        talent_user = request.user
+        
+        # Verify user is a talent
+        if talent_user.user_type != 'talent':
+            return Response({'error': 'Only talents can access this endpoint.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        selections = MentorTalentSelection.objects.filter(talent=talent_user).select_related('mentor__mentor_profile')
         result = []
         for selection in selections:
             mentor_profile = getattr(selection.mentor, 'mentor_profile', None)

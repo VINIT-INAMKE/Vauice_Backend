@@ -52,19 +52,24 @@ class MentorProfileUpdateAPIView(generics.UpdateAPIView):
 
 class AddSelectedTalentAPIView(generics.CreateAPIView):
     serializer_class = MentorTalentSelectionCreateSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        user_id = request.data.get('user_id')
+        # Use authenticated user as mentor
+        mentor_user = request.user
+        
+        # Verify user is a mentor
+        if mentor_user.user_type != 'mentor':
+            return Response({'error': 'Only mentors can select talents.'}, status=status.HTTP_403_FORBIDDEN)
+        
         talent_id = request.data.get('talent_id')
-        if not user_id or not talent_id:
-            return Response({'error': 'user_id and talent_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not talent_id:
+            return Response({'error': 'talent_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            mentor_user = User.objects.get(id=user_id, user_type='mentor')
             talent_user = User.objects.get(id=talent_id, user_type='talent')
         except User.DoesNotExist:
-            return Response({'error': 'Mentor or Talent user not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Talent user not found.'}, status=status.HTTP_404_NOT_FOUND)
         
         # Create serializer with the user data
         serializer = self.get_serializer(data={'mentor': mentor_user.id, 'talent': talent_user.id})
@@ -193,51 +198,48 @@ class AddSelectedTalentAPIView(generics.CreateAPIView):
 
 class ListSelectedTalentsAPIView(generics.ListAPIView):
     serializer_class = MentorTalentSelectionSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor User ID", type=openapi.TYPE_INTEGER, required=True)
-    ])
     def get_queryset(self):
-        user_id = self.request.query_params.get('user_id')
-        if not user_id:
+        # Use authenticated user
+        mentor_user = self.request.user
+        
+        # Verify user is a mentor
+        if mentor_user.user_type != 'mentor':
             return MentorTalentSelection.objects.none()
-        try:
-            mentor_user = User.objects.get(id=user_id, user_type='mentor')
-        except User.DoesNotExist:
-            return MentorTalentSelection.objects.none()
+        
         # Get all selected talents with their related data
         return MentorTalentSelection.objects.filter(mentor=mentor_user).select_related(
             'talent__talent_profile', 'mentor__mentor_profile'
         ).prefetch_related('talent__talent_profile__posts')
 
     def list(self, request, *args, **kwargs):
-        user_id = request.query_params.get('user_id')
-        if not user_id:
-            return Response({'error': 'user_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            User.objects.get(id=user_id, user_type='mentor')
-        except User.DoesNotExist:
-            return Response({'error': 'Mentor user not found.'}, status=status.HTTP_404_NOT_FOUND)
+        # Verify user is a mentor
+        if request.user.user_type != 'mentor':
+            return Response({'error': 'Only mentors can access selected talents.'}, status=status.HTTP_403_FORBIDDEN)
         
         return super().list(request, *args, **kwargs)
 
 class AddRejectedTalentAPIView(generics.CreateAPIView):
     serializer_class = MentorTalentRejectionCreateSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        user_id = request.data.get('user_id')
+        # Use authenticated user as mentor
+        mentor_user = request.user
+        
+        # Verify user is a mentor
+        if mentor_user.user_type != 'mentor':
+            return Response({'error': 'Only mentors can reject talents.'}, status=status.HTTP_403_FORBIDDEN)
+        
         talent_id = request.data.get('talent_id')
-        if not user_id or not talent_id:
-            return Response({'error': 'user_id and talent_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not talent_id:
+            return Response({'error': 'talent_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            mentor_user = User.objects.get(id=user_id, user_type='mentor')
             talent_user = User.objects.get(id=talent_id, user_type='talent')
         except User.DoesNotExist:
-            return Response({'error': 'Mentor or Talent user not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Talent user not found.'}, status=status.HTTP_404_NOT_FOUND)
         
         # Create serializer with the user data
         serializer = self.get_serializer(data={'mentor': mentor_user.id, 'talent': talent_user.id})
@@ -275,33 +277,25 @@ class AddRejectedTalentAPIView(generics.CreateAPIView):
 
 class ListRejectedTalentsAPIView(generics.ListAPIView):
     serializer_class = MentorTalentRejectionSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('user_id', openapi.IN_QUERY, description="Mentor User ID", type=openapi.TYPE_INTEGER, required=True)
-    ])
     def get_queryset(self):
-        user_id = self.request.query_params.get('user_id')
-        if not user_id:
+        # Use authenticated user
+        mentor_user = self.request.user
+        
+        # Verify user is a mentor
+        if mentor_user.user_type != 'mentor':
             return MentorTalentRejection.objects.none()
-        try:
-            mentor_user = User.objects.get(id=user_id, user_type='mentor')
-        except User.DoesNotExist:
-            return MentorTalentRejection.objects.none()
+        
         # Get all rejected talents with their related data
         return MentorTalentRejection.objects.filter(mentor=mentor_user).select_related(
             'talent__talent_profile', 'mentor__mentor_profile'
         ).prefetch_related('talent__talent_profile__posts')
 
     def list(self, request, *args, **kwargs):
-        user_id = request.query_params.get('user_id')
-        if not user_id:
-            return Response({'error': 'user_id query parameter is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            User.objects.get(id=user_id, user_type='mentor')
-        except User.DoesNotExist:
-            return Response({'error': 'Mentor user not found.'}, status=status.HTTP_404_NOT_FOUND)
+        # Verify user is a mentor
+        if request.user.user_type != 'mentor':
+            return Response({'error': 'Only mentors can access rejected talents.'}, status=status.HTTP_403_FORBIDDEN)
         
         return super().list(request, *args, **kwargs)
 
@@ -412,23 +406,3 @@ class PostViewsCountAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data)
         return Response(serializer.data)
 
-class MentorsWhoSelectedTalentAPIView(APIView):
-    """
-    Returns all mentor profiles (with selected_at) who have selected the given talent (by user_id)
-    """
-    permission_classes = [AllowAny]
-
-    def get(self, request, user_id):
-        try:
-            talent_user = User.objects.get(id=user_id, user_type='talent')
-        except User.DoesNotExist:
-            return Response({'detail': 'Talent user not found'}, status=status.HTTP_404_NOT_FOUND)
-        selected_qs = MentorTalentSelection.objects.filter(talent=talent_user).select_related('mentor__mentor_profile')
-        result = []
-        for selected in selected_qs:
-            mentor_data = MentorProfileSerializer(selected.mentor.mentor_profile).data
-            result.append({
-                'mentor': mentor_data,
-                'selected_at': selected.selected_at
-            })
-        return Response(result)
