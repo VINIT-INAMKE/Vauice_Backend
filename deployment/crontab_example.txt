@@ -1,0 +1,17 @@
+# Crontab configuration for Vauice Chat Cleanup
+# Add these entries to your server's crontab using: crontab -e
+
+# Daily cleanup at 2:00 AM (removes deleted messages older than 7 days)
+0 2 * * * cd /path/to/vauice/backend && python cleanup_scheduler.py daily >> /var/log/vauice_cleanup.log 2>&1
+
+# Weekly cleanup on Sundays at 3:00 AM (removes deleted messages older than 30 days)
+0 3 * * 0 cd /path/to/vauice/backend && python cleanup_scheduler.py weekly >> /var/log/vauice_cleanup.log 2>&1
+
+# Monthly cleanup on the 1st day at 4:00 AM (removes deleted messages older than 365 days)
+0 4 1 * * cd /path/to/vauice/backend && python cleanup_scheduler.py monthly >> /var/log/vauice_cleanup.log 2>&1
+
+# Alternative: Use Django's management command directly
+# 0 2 * * * cd /path/to/vauice/backend && python manage.py cleanup_chat --days=7 >> /var/log/vauice_cleanup.log 2>&1
+
+# Note: Replace /path/to/vauice/backend with your actual project path
+# Make sure the Python environment and all dependencies are available

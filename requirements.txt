@@ -43,3 +43,5 @@ channels==4.0.0
 channels-redis==4.1.0
 cryptography==41.0.0
 redis==5.0.1
+django-ratelimit==3.0.1
+django-redis==5.2.0

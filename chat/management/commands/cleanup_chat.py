@@ -67,4 +67,21 @@ class Command(BaseCommand):
                 self.style.SUCCESS(f"Cleaned up {cleaned_keys} expired encryption keys")
             )
         
+        # Clean up orphaned attachments (attachments with no message after 1 hour)
+        orphan_cutoff = timezone.now() - timedelta(hours=1)
+        orphaned_attachments = MessageAttachment.objects.filter(
+            message__isnull=True,
+            uploaded_at__lt=orphan_cutoff
+        )
+        
+        orphan_count = orphaned_attachments.count()
+        
+        if dry_run:
+            self.stdout.write(f"Would delete {orphan_count} orphaned attachments")
+        else:
+            orphaned_attachments.delete()
+            self.stdout.write(
+                self.style.SUCCESS(f"Deleted {orphan_count} orphaned attachments")
+            )
+        
         self.stdout.write(self.style.SUCCESS("Chat cleanup completed"))

@@ -96,7 +96,19 @@ def send_new_message_notification(message_obj):
     recipient = recipient_membership.user
     
     title = f"New Message from {sender.get_full_name()}"
-    message = message_obj.content[:100] + "..." if len(message_obj.content) > 100 else message_obj.content
+    # Don't expose encrypted content in notifications for security
+    if message_obj.message_type == 'text':
+        message = "New message received"
+    elif message_obj.message_type == 'image':
+        message = "📷 Photo"
+    elif message_obj.message_type == 'video':
+        message = "🎥 Video"
+    elif message_obj.message_type == 'audio':
+        message = "🎵 Audio message"
+    elif message_obj.message_type == 'file':
+        message = "📎 File attachment"
+    else:
+        message = "New message received"
     
     return send_notification(
         recipient=recipient,

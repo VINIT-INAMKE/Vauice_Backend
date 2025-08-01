@@ -420,6 +420,21 @@ LOGGING = {
 # Create logs directory if it doesn't exist
 os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
+# Cache configuration for rate limiting
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': env('REDIS_URL', default='redis://localhost:6379'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+# Rate limiting configuration
+RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_ENABLE = True
+
 # Email Configuration for Password Reset - SendGrid
 # Following SendGrid Python Integration Guide: https://app.sendgrid.com/guide/integrate/langs/python
 

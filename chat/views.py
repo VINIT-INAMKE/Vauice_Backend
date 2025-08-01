@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q, Prefetch
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from ratelimit.decorators import ratelimit
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import uuid
@@ -26,6 +28,7 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 channel_layer = get_channel_layer()
 
+@method_decorator(ratelimit(key='user', rate='30/m', method='POST', block=True), name='create')
 class ChatRoomListView(generics.ListCreateAPIView):
     """List and create chat rooms"""
     permission_classes = [permissions.IsAuthenticated]
@@ -216,6 +219,7 @@ class ChatRoomLeaveView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+@method_decorator(ratelimit(key='user', rate='60/m', method='POST', block=True), name='create')
 class MessageListView(generics.ListCreateAPIView):
     """List messages for a room and create new messages"""
     permission_classes = [permissions.IsAuthenticated]
@@ -477,6 +481,7 @@ class UserSearchView(generics.ListAPIView):
             id=self.request.user.id
         ).select_related('presence')[:20]
 
+@method_decorator(ratelimit(key='user', rate='20/m', method='POST', block=True), name='post')
 class FileUploadView(APIView):
     """Handle file uploads for chat"""
     permission_classes = [permissions.IsAuthenticated]
@@ -489,7 +494,7 @@ class FileUploadView(APIView):
         uploaded_file = serializer.validated_data['file']
         file_type = serializer.validated_data['file_type']
         
-        # Create a temporary attachment record
+        # Create a temporary attachment record with expiration
         attachment = MessageAttachment.objects.create(
             message=None,  # Will be linked when message is created
             file=uploaded_file,
@@ -499,6 +504,14 @@ class FileUploadView(APIView):
             is_encrypted=serializer.validated_data.get('is_encrypted', True),
             encryption_key_id=serializer.validated_data.get('encryption_key_id')
         )
+        
+        # Schedule cleanup of orphaned attachments after 1 hour
+        from django.utils import timezone
+        from datetime import timedelta
+        cleanup_time = timezone.now() + timedelta(hours=1)
+        
+        # Log for potential cleanup (you could use Celery for this in production)
+        logger.info(f"Temporary attachment {attachment.id} uploaded, cleanup scheduled for {cleanup_time}")
         
         return Response({
             'attachment_id': str(attachment.id),

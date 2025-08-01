@@ -28,6 +28,11 @@ class ChatRoom(models.Model):
     
     class Meta:
         ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['-updated_at']),
+            models.Index(fields=['room_type', 'is_active']),
+            models.Index(fields=['created_by']),
+        ]
         
     def __str__(self):
         if self.room_type == 'group' and self.name:
@@ -79,6 +84,13 @@ class Message(models.Model):
     
     class Meta:
         ordering = ['timestamp']
+        indexes = [
+            models.Index(fields=['room', 'timestamp']),
+            models.Index(fields=['sender', 'timestamp']),
+            models.Index(fields=['room', 'is_deleted']),
+            models.Index(fields=['room', 'is_deleted', 'timestamp']),
+            models.Index(fields=['message_type']),
+        ]
         
     def __str__(self):
         return f"Message from {self.sender.username} in {self.room}"
@@ -123,6 +135,11 @@ class MessageStatus(models.Model):
     class Meta:
         unique_together = ['message', 'user']
         ordering = ['timestamp']
+        indexes = [
+            models.Index(fields=['message', 'user']),
+            models.Index(fields=['user', 'status']),
+            models.Index(fields=['status', 'timestamp']),
+        ]
         
     def __str__(self):
         return f"{self.user.username} - {self.status} - {self.message.id}"
@@ -196,6 +213,12 @@ class RoomMembership(models.Model):
     
     class Meta:
         unique_together = ['user', 'room']
+        indexes = [
+            models.Index(fields=['user', 'room']),
+            models.Index(fields=['room', 'role']),
+            models.Index(fields=['user', 'notifications_enabled']),
+            models.Index(fields=['joined_at']),
+        ]
         
     def __str__(self):
         return f"{self.user.username} in {self.room} ({self.role})"
