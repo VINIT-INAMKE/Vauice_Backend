@@ -9,6 +9,11 @@ PORT=${PORT:-8000}
 echo "🚀 Starting Vauice Backend with ASGI support..."
 echo "📡 WebSocket support: ENABLED"
 echo "🌐 Port: $PORT"
+
+# Debug environment variables at runtime
+echo "🔍 Runtime Environment Check..."
+python debug_env.py
+
 echo "🔧 Environment: $(python -c "import os; print('Production' if os.getenv('DEBUG') == 'False' else 'Development')")"
 
 # Start the ASGI server
