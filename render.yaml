@@ -12,20 +12,21 @@ services:
         value: 3.12
       - key: WEB_CONCURRENCY
         value: 4
-      # Add your environment variables here
-      # - key: SECRET_KEY
-      #   generateValue: true
-      # - key: DEBUG
-      #   value: false
-      # - key: DB_CONN_URL
-      #   fromDatabase:
-      #     name: vauice-db
-      #     property: connectionString
-      # - key: REDIS_URL
-      #   fromService:
-      #     type: redis
-      #     name: vauice-redis
-      #     property: connectionString
+      # Add your sensitive environment variables manually in Render Dashboard
+      # Go to: Service Settings → Environment → Add Environment Variable
+      # 
+      # Required variables:
+      # SECRET_KEY=your-secret-key
+      # DEBUG=False  
+      # DB_CONN_URL=your-database-url
+      # REDIS_URL=your-redis-url
+      # CLOUDINARY_CLOUD_NAME=your-cloudinary-name
+      # CLOUDINARY_API_KEY=your-cloudinary-key
+      # CLOUDINARY_API_SECRET=your-cloudinary-secret
+      # SENDGRID_API_KEY=your-sendgrid-key
+      # SENDGRID_FROM_EMAIL=your-email
+      # SENDGRID_FROM_NAME=your-name
+      # ALLOWED_HOSTS=localhost,127.0.0.1,vauice-backend.onrender.com
 
 # Optional: Redis service for WebSocket scaling
 # services:

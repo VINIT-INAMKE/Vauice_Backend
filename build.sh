@@ -2,6 +2,9 @@
 
 echo "🚀 Starting Vauice Backend Build Process..."
 
+echo "🔍 Checking Environment Variables..."
+python debug_env.py
+
 echo "📦 Installing Dependencies..."
 pip install -r requirements.txt 
 
