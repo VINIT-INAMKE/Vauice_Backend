@@ -1,10 +1,8 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.utils import timezone
 from cloudinary.models import CloudinaryField
 import uuid
-
-User = get_user_model()
 
 class ChatRoom(models.Model):
     """Chat room model for private and group conversations"""
@@ -16,8 +14,8 @@ class ChatRoom(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, blank=True, null=True)  # For group chats
     room_type = models.CharField(max_length=10, choices=ROOM_TYPES, default='private')
-    participants = models.ManyToManyField(User, related_name='chat_rooms')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_rooms')
+    participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='chat_rooms')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_rooms')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
@@ -66,7 +64,7 @@ class Message(models.Model):
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='messages')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
     message_type = models.CharField(max_length=10, choices=MESSAGE_TYPES, default='text')
     
     # Encrypted content - never store plaintext on server
@@ -128,7 +126,7 @@ class MessageStatus(models.Model):
     )
     
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='statuses')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='sent')
     timestamp = models.DateTimeField(auto_now_add=True)
     
@@ -152,7 +150,7 @@ class UserPresence(models.Model):
         ('offline', 'Offline'),
     )
     
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='presence')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='presence')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='offline')
     last_seen = models.DateTimeField(auto_now=True)
     is_typing_in = models.ForeignKey(ChatRoom, on_delete=models.SET_NULL, blank=True, null=True, related_name='typing_users')
@@ -184,7 +182,7 @@ class UserPresence(models.Model):
 
 class EncryptionKey(models.Model):
     """Store public keys for end-to-end encryption"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='encryption_keys')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='encryption_keys')
     key_id = models.CharField(max_length=255, unique=True)
     public_key = models.TextField()  # Base64 encoded public key
     created_at = models.DateTimeField(auto_now_add=True)
@@ -204,7 +202,7 @@ class RoomMembership(models.Model):
         ('owner', 'Owner'),
     )
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE, related_name='memberships')
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='member')
     joined_at = models.DateTimeField(auto_now_add=True)
