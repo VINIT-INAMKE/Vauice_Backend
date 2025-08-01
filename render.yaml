@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: vauice-backend
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: "./build.sh"
+    startCommand: "daphne backend.asgi:application --port $PORT --bind 0.0.0.0 --verbosity 2"
+    healthCheckPath: "/ping/"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12
+      - key: WEB_CONCURRENCY
+        value: 4
+      # Add your environment variables here
+      # - key: SECRET_KEY
+      #   generateValue: true
+      # - key: DEBUG
+      #   value: false
+      # - key: DB_CONN_URL
+      #   fromDatabase:
+      #     name: vauice-db
+      #     property: connectionString
+      # - key: REDIS_URL
+      #   fromService:
+      #     type: redis
+      #     name: vauice-redis
+      #     property: connectionString
+
+# Optional: Redis service for WebSocket scaling
+# services:
+#   - type: redis
+#     name: vauice-redis
+#     region: oregon
+#     plan: starter
+#     maxmemoryPolicy: allkeys-lru
+
+# Optional: PostgreSQL database
+# databases:
+#   - name: vauice-db
+#     region: oregon
+#     plan: starter
