@@ -20,11 +20,14 @@ User = get_user_model()
 
 # Create Socket.IO server (no Redis needed for single-server deployment)
 sio = socketio.Server(
-    cors_allowed_origins="*",
-    logger=False,  # Reduce logging to prevent interference
-    engineio_logger=False,
+    cors_allowed_origins=["*"],
+    cors_credentials=True,
+    logger=True,  # Enable logging for debugging
+    engineio_logger=True,
     ping_timeout=60,
-    ping_interval=25
+    ping_interval=25,
+    allow_upgrades=True,
+    transports=['polling', 'websocket']
 )
 
 # In-memory storage for user sessions and rooms
