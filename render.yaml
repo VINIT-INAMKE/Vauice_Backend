@@ -5,10 +5,10 @@ services:
     region: oregon
     plan: starter
     buildCommand: "./build.sh"
-    startCommand: "gunicorn backend.wsgi_socketio:application --bind 0.0.0.0:$PORT --worker-class gevent --workers 1"
+    startCommand: "gunicorn backend.wsgi_socketio:application --bind 0.0.0.0:$PORT --workers 1 --timeout 120"
     healthCheckPath: "/ping/"
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12
+        value: 3.11.9
       - key: WEB_CONCURRENCY
         value: 4
