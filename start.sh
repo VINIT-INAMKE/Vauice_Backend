@@ -16,11 +16,11 @@ python debug_env.py
 
 echo "🔧 Environment: $(python -c "import os; print('Production' if os.getenv('DEBUG') == 'False' else 'Development')")"
 
-# Start the WSGI server with Eventlet for Socket.io
-echo "🎯 Starting Gunicorn with Eventlet for Socket.io..."
+# Start the WSGI server with Gevent for Socket.io
+echo "🎯 Starting Gunicorn with Gevent for Socket.io..."
 exec gunicorn backend.wsgi_socketio:application \
     --bind 0.0.0.0:$PORT \
-    --worker-class eventlet \
+    --worker-class gevent \
     --workers 1 \
     --timeout 120 \
     --access-logfile - \
