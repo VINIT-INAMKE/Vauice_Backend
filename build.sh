@@ -17,7 +17,10 @@ python manage.py makemigrations
 echo "⬆️ Migrating Database..." 
 python manage.py migrate
 
+echo "🗂️ Creating cache table for rate limiting..."
+python manage.py createcachetable
+
 echo "🧹 Running cleanup for orphaned data..."
 python manage.py cleanup_chat --days=30 || echo "⚠️ Cleanup failed, continuing..."
 
-echo "✅ Build Complete! Ready for Socket.io deployment with WSGI + Eventlet."
+echo "✅ Build Complete! Ready for Socket.io deployment with sync worker."
