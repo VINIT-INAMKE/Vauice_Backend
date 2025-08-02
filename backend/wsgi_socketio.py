@@ -1,6 +1,6 @@
 """
 WSGI config for backend project with Socket.IO support.
-This replaces the ASGI setup and uses regular WSGI with Socket.IO
+CRITICAL FIX: Proper request routing to prevent Socket.io from breaking API calls
 """
 
 import os
@@ -18,9 +18,28 @@ from chat.socketio_complete import sio
 # Create Django WSGI app
 django_app = get_wsgi_application()
 
-# Create Socket.IO app that wraps Django
-application = socketio.WSGIApp(sio, django_app, socketio_path='/socket.io/')
+def conditional_wsgi_app(environ, start_response):
+    """
+    Route requests properly:
+    - /socket.io/* goes to Socket.IO
+    - Everything else goes to Django
+    """
+    path = environ.get('PATH_INFO', '')
+    
+    # Socket.IO requests
+    if path.startswith('/socket.io/'):
+        # Create a temporary Socket.IO WSGI app just for this request
+        socketio_app = socketio.WSGIApp(sio, None, socketio_path='socket.io')
+        return socketio_app(environ, start_response)
+    
+    # All other requests go to Django
+    return django_app(environ, start_response)
 
-# This allows both:
-# - Regular HTTP/API requests to Django
-# - Socket.IO connections on /socket.io/ path
+# Use the conditional WSGI app
+application = conditional_wsgi_app
+
+# Request routing:
+# - /socket.io/* → Socket.IO server ONLY
+# - /api/* → Django REST API  
+# - /admin/* → Django Admin
+# - /* → Django views
