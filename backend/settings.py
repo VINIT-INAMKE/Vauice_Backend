@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_yasg',
     'cloudinary_storage',  # Add Cloudinary storage
-    'channels',  # Add Django Channels for WebSocket support
+    # 'channels',  # Removed - using Socket.io for WebSocket support
     'userauths',
     'talent',
     'mentor',
@@ -103,15 +103,15 @@ DATABASES = {
     )
 }
 
-# Django Channels Configuration
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [env('REDIS_URL', default='redis://localhost:6379')],
-        },
-    },
-}
+# Django Channels Configuration - Commented out (using Socket.io instead)
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [env('REDIS_URL', default='redis://localhost:6379')],
+#         },
+#     },
+# }
 
 # Chat Application Settings
 CHAT_SETTINGS = {

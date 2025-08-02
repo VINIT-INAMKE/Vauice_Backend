@@ -149,26 +149,10 @@ class AddSelectedTalentAPIView(generics.CreateAPIView):
                     role='member'
                 )
                 
-                # Optional: Send notification to talent
-                try:
-                    from channels.layers import get_channel_layer
-                    from asgiref.sync import async_to_sync
-                    
-                    channel_layer = get_channel_layer()
-                    if channel_layer:
-                        async_to_sync(channel_layer.group_send)(
-                            f'user_{talent_user.id}',
-                            {
-                                'type': 'notification',
-                                'notification_type': 'new_mentor_chat',
-                                'room_id': str(room.id),
-                                'mentor_name': mentor_user.get_full_name(),
-                                'message': f'You can now chat with your mentor {mentor_user.get_full_name()}'
-                            }
-                        )
-                except ImportError:
-                    pass  # Channels not available
-                    
+                # Real-time notifications now handled by Socket.io
+                # Socket.io will handle mentor-talent chat notifications
+                logger.info(f"Chat room created between mentor {mentor_user.username} and talent {talent_user.username}")
+                
                 return room
             return existing_room
             

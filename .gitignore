@@ -1,5 +1,39 @@
-# custom py
+# ===== VAUICE BACKEND SPECIFIC =====
 
+# Documentation files (too many, cluttering production)
+
+
+# Documentation folders
+docs/
+docs.rar
+deployment/
+
+# Log files
+logs/
+*.log
+server.log
+
+# Test files
+test_*.py
+*test.py
+
+# Development utilities
+debug_env.py
+cleanup_scheduler.py
+
+
+
+# Virtual environment (specific to this project)
+vauice_backend/
+
+
+
+# Static files (generated, not source)
+staticfiles/
+static/
+
+
+# ===== STANDARD PYTHON/DJANGO =====
 
 
 # Byte-compiled / optimized / DLL files

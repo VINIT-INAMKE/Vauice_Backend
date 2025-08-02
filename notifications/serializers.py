@@ -10,7 +10,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
+        fields = ['id', 'username', 'firstname', 'lastname', 'email']
         ref_name = 'NotificationUser'
 
 class NotificationSerializer(serializers.ModelSerializer):

@@ -8,8 +8,9 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from ratelimit.decorators import ratelimit
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+# Django Channels removed - using Socket.io for real-time communication
+# from channels.layers import get_channel_layer
+# from asgiref.sync import async_to_sync
 import uuid
 import logging
 
@@ -26,7 +27,7 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
-channel_layer = get_channel_layer()
+# channel_layer = get_channel_layer()  # Removed - using Socket.io
 
 @method_decorator(ratelimit(key='user', rate='30/m', method='POST', block=True), name='create')
 class ChatRoomListView(generics.ListCreateAPIView):
@@ -158,18 +159,9 @@ class ChatRoomInviteView(APIView):
                 role='member'
             )
         
-        # Notify via WebSocket
-        for user in new_users:
-            async_to_sync(channel_layer.group_send)(
-                f'user_{user.id}',
-                {
-                    'type': 'notification',
-                    'notification_type': 'room_invite',
-                    'room_id': str(room.id),
-                    'room_name': room.name or f'Chat with {room.get_other_participant(user)}',
-                    'invited_by': request.user.username
-                }
-            )
+        # Real-time notifications now handled by Socket.io
+        # Socket.io will handle room invitations via 'invite_to_room' event
+        # No need for Django Channels WebSocket calls
         
         return Response(
             {'message': f'{len(new_users)} users invited successfully'},
@@ -302,14 +294,8 @@ class MessageListView(generics.ListCreateAPIView):
         room.updated_at = timezone.now()
         room.save()
         
-        # Send via WebSocket
-        async_to_sync(channel_layer.group_send)(
-            f'chat_{room.id}',
-            {
-                'type': 'chat_message',
-                'message': MessageSerializer(message).data
-            }
-        )
+        # Real-time messaging now handled by Socket.io 'send_message' event
+        # No need for Django Channels WebSocket calls
         
         return Response(
             MessageSerializer(message).data,
@@ -347,14 +333,8 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
         message.edited_at = timezone.now()
         message.save()
         
-        # Send via WebSocket
-        async_to_sync(channel_layer.group_send)(
-            f'chat_{message.room.id}',
-            {
-                'type': 'message_edited',
-                'message': MessageSerializer(message).data
-            }
-        )
+        # Real-time message editing now handled by Socket.io 'edit_message' event
+        # No need for Django Channels WebSocket calls
         
         return Response(
             MessageSerializer(message).data,
@@ -375,15 +355,8 @@ class MessageDetailView(generics.RetrieveUpdateDestroyAPIView):
         # Soft delete
         message.soft_delete()
         
-        # Send via WebSocket
-        async_to_sync(channel_layer.group_send)(
-            f'chat_{message.room.id}',
-            {
-                'type': 'message_deleted',
-                'message_id': str(message.id),
-                'deleted_by': str(request.user.id)
-            }
-        )
+        # Real-time message deletion now handled by Socket.io 'delete_message' event
+        # No need for Django Channels WebSocket calls
         
         return Response(
             {'message': 'Message deleted successfully'},

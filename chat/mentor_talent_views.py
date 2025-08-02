@@ -215,7 +215,7 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
             )
         
         # Check if mentor has selected this talent
-        if not MentorTalentSelection.objects.filter(mentor=mentor_user, talent=talent_user).exists():
+        if not MentorTalentSelection.objects.filter(mentor=user, talent=talent_user).exists():
             return Response(
                 {'error': 'You can only chat with talents you have selected'},
                 status=status.HTTP_403_FORBIDDEN
@@ -300,7 +300,7 @@ class MentorTalentChatViewSet(viewsets.ViewSet):
                 talent_profile = user.talent_profile
                 mentor_profile = other_user.mentor_profile
                 
-                if MentorTalentSelection.objects.filter(mentor=user, talent=other_user).exists():
+                if MentorTalentSelection.objects.filter(mentor=other_user, talent=user).exists():
                     can_chat = True
                     reason = "Talent has been selected by this mentor"
                 else:

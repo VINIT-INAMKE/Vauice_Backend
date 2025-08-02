@@ -24,8 +24,8 @@ class TalentPoolAdmin(admin.ModelAdmin):
         'talent__talent_profile__is_verified',
     ]
     search_fields = [
-        'mentor__email', 'mentor__first_name', 'mentor__last_name', 
-        'talent__email', 'talent__first_name', 'talent__last_name',
+        'mentor__email', 'mentor__firstname', 'mentor__lastname', 
+        'talent__email', 'talent__firstname', 'talent__lastname',
         'talent__talent_profile__location'
     ]
     readonly_fields = ['added_at']
@@ -48,7 +48,7 @@ class TalentPoolAdmin(admin.ModelAdmin):
             f"({mentor.email})"
         )
     mentor_display.short_description = "Mentor"
-    mentor_display.admin_order_field = 'mentor__first_name'
+    mentor_display.admin_order_field = 'mentor__firstname'
     
     def talent_display(self, obj):
         """Display talent with verification status and link"""
@@ -63,7 +63,7 @@ class TalentPoolAdmin(admin.ModelAdmin):
             f"({talent.email})"
         )
     talent_display.short_description = "Talent"
-    talent_display.admin_order_field = 'talent__first_name'
+    talent_display.admin_order_field = 'talent__firstname'
     
     def talent_sports(self, obj):
         """Display talent's sports"""
@@ -132,8 +132,8 @@ class MentorTalentSelectionAdmin(admin.ModelAdmin):
         'talent__talent_profile__is_verified',
     ]
     search_fields = [
-        'mentor__email', 'mentor__first_name', 'mentor__last_name', 
-        'talent__email', 'talent__first_name', 'talent__last_name',
+        'mentor__email', 'mentor__firstname', 'mentor__lastname', 
+        'talent__email', 'talent__firstname', 'talent__lastname',
         'talent__talent_profile__location'
     ]
     readonly_fields = ['selected_at']
@@ -156,7 +156,7 @@ class MentorTalentSelectionAdmin(admin.ModelAdmin):
             f"({mentor.email})"
         )
     mentor_display.short_description = "Mentor"
-    mentor_display.admin_order_field = 'mentor__first_name'
+    mentor_display.admin_order_field = 'mentor__firstname'
     
     def talent_display(self, obj):
         """Display talent with verification status and link"""
@@ -171,7 +171,7 @@ class MentorTalentSelectionAdmin(admin.ModelAdmin):
             f"({talent.email})"
         )
     talent_display.short_description = "Talent"
-    talent_display.admin_order_field = 'talent__first_name'
+    talent_display.admin_order_field = 'talent__firstname'
     
     def sports_match_status(self, obj):
         """Display if mentor and talent sports match"""
@@ -235,8 +235,8 @@ class MentorTalentRejectionAdmin(admin.ModelAdmin):
         'talent__talent_profile__is_verified',
     ]
     search_fields = [
-        'mentor__email', 'mentor__first_name', 'mentor__last_name', 
-        'talent__email', 'talent__first_name', 'talent__last_name',
+        'mentor__email', 'mentor__firstname', 'mentor__lastname', 
+        'talent__email', 'talent__firstname', 'talent__lastname',
         'talent__talent_profile__location'
     ]
     readonly_fields = ['rejected_at']
@@ -259,7 +259,7 @@ class MentorTalentRejectionAdmin(admin.ModelAdmin):
             f"({mentor.email})"
         )
     mentor_display.short_description = "Mentor"
-    mentor_display.admin_order_field = 'mentor__first_name'
+    mentor_display.admin_order_field = 'mentor__firstname'
     
     def talent_display(self, obj):
         """Display talent with verification status and link"""
@@ -274,7 +274,7 @@ class MentorTalentRejectionAdmin(admin.ModelAdmin):
             f"({talent.email})"
         )
     talent_display.short_description = "Talent"
-    talent_display.admin_order_field = 'talent__first_name'
+    talent_display.admin_order_field = 'talent__firstname'
     
     def sports_match_status(self, obj):
         """Display if mentor and talent sports match"""
@@ -346,7 +346,7 @@ class MatchingAnalyticsAdmin(admin.ModelAdmin):
         recent_rejections = MentorTalentRejection.objects.filter(rejected_at__gte=week_ago).count()
         
         # Top mentors by selections
-        top_mentors = MentorTalentSelection.objects.values('mentor__first_name', 'mentor__last_name')\
+        top_mentors = MentorTalentSelection.objects.values('mentor__firstname', 'mentor__lastname')\
             .annotate(selection_count=Count('id'))\
             .order_by('-selection_count')[:5]
         

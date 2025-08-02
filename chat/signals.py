@@ -56,23 +56,9 @@ def create_mentor_talent_chat_room(sender, instance, created, **kwargs):
                 
                 logger.info(f"Created chat room {room.id} for mentor {mentor_user.username} and talent {talent_user.username}")
                 
-                # Optional: Send notification to talent about new chat
-                from channels.layers import get_channel_layer
-                from asgiref.sync import async_to_sync
-                
-                channel_layer = get_channel_layer()
-                if channel_layer:
-                    # Notify talent about new chat room
-                    async_to_sync(channel_layer.group_send)(
-                        f'user_{talent_user.id}',
-                        {
-                            'type': 'notification',
-                            'notification_type': 'new_mentor_chat',
-                            'room_id': str(room.id),
-                            'mentor_name': mentor_user.get_full_name(),
-                            'message': f'You can now chat with your mentor {mentor_user.get_full_name()}'
-                        }
-                    )
+                # Real-time notifications now handled by Socket.io
+                # Socket.io will handle new chat room notifications when users connect
+                logger.info(f"New chat room notification for talent {talent_user.username} - mentor: {mentor_user.get_full_name()}")
             else:
                 logger.info(f"Chat room already exists between mentor {mentor_user.username} and talent {talent_user.username}")
                 

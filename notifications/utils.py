@@ -1,6 +1,7 @@
 from .models import Notification
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
+# Django Channels removed - using Socket.io for real-time notifications
+# from asgiref.sync import async_to_sync
+# from channels.layers import get_channel_layer
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,26 +24,10 @@ def send_notification(recipient, sender=None, notification_type=None, title='', 
         message=message_obj
     )
     
-    # Send WebSocket notification if recipient is online
-    try:
-        channel_layer = get_channel_layer()
-        if channel_layer:
-            async_to_sync(channel_layer.group_send)(
-                f'user_{recipient.id}',
-                {
-                    'type': 'notification',
-                    'notification_id': notification.id,
-                    'notification_type': notification_type,
-                    'title': title,
-                    'message': message_text,
-                    'created_at': notification.created_at.isoformat()
-                }
-            )
-    except Exception as e:
-        # Log error but don't fail the notification creation
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error sending WebSocket notification: {str(e)}")
+    # Real-time notifications now handled by Socket.io
+    # Socket.io will handle notifications via connected user sessions
+    # No need for Django Channels WebSocket calls
+    logger.info(f"Notification created for {recipient.username}: {title}")
     
     return notification
 

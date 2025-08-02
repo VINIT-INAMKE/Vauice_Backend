@@ -8,17 +8,63 @@ from .models import (
 User = get_user_model()
 
 class UserBasicSerializer(serializers.ModelSerializer):
-    """Basic user serializer for chat contexts"""
+    """Enhanced user serializer for chat contexts with profile data"""
     avatar_url = serializers.SerializerMethodField()
+    profile_data = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'firstname', 'lastname', 'avatar_url']
+        fields = [
+            'id', 'username', 'firstname', 'lastname', 'full_name', 
+            'user_type', 'gender', 'age', 'avatar_url', 'profile_data'
+        ]
         
     def get_avatar_url(self, obj):
+        # Check both user avatar and profile picture
         if hasattr(obj, 'avatar') and obj.avatar:
             return obj.avatar.url
+        
+        # Check profile-specific avatar
+        try:
+            if obj.user_type == 'talent' and hasattr(obj, 'talent_profile'):
+                if obj.talent_profile.profile_picture:
+                    return obj.talent_profile.profile_picture.url
+            elif obj.user_type == 'mentor' and hasattr(obj, 'mentor_profile'):
+                if obj.mentor_profile.profile_picture:
+                    return obj.mentor_profile.profile_picture.url
+        except:
+            pass
+            
         return None
+    
+    def get_profile_data(self, obj):
+        """Get user-type specific profile data for richer chat context"""
+        try:
+            if obj.user_type == 'talent' and hasattr(obj, 'talent_profile'):
+                profile = obj.talent_profile
+                return {
+                    'bio': profile.bio[:100] + '...' if len(profile.bio) > 100 else profile.bio,
+                    'selected_sports': profile.selected_sports[:3] if isinstance(profile.selected_sports, list) else [],
+                    'experience_years': profile.experience_years,
+                    'is_verified': profile.is_verified,
+                    'is_featured': profile.is_featured,
+                    'location': f"{profile.city}, {profile.state}" if profile.city and profile.state else profile.location
+                }
+            elif obj.user_type == 'mentor' and hasattr(obj, 'mentor_profile'):
+                profile = obj.mentor_profile
+                return {
+                    'bio': profile.bio[:100] + '...' if len(profile.bio) > 100 else profile.bio,
+                    'selected_sports': profile.selected_sports[:3] if isinstance(profile.selected_sports, list) else [],
+                    'coaching_experience_years': profile.coaching_experience_years,
+                    'coaching_levels': profile.coaching_levels,
+                    'is_verified': profile.is_verified,
+                    'is_available': profile.is_available,
+                    'location': f"{profile.city}, {profile.state}" if profile.city and profile.state else profile.location
+                }
+        except:
+            pass
+            
+        return {}
 
 class UserPresenceSerializer(serializers.ModelSerializer):
     """User presence serializer"""
@@ -234,17 +280,34 @@ class RoomInviteSerializer(serializers.Serializer):
         return value
 
 class UserSearchSerializer(serializers.ModelSerializer):
-    """Serializer for user search results"""
+    """Enhanced serializer for user search results with profile context"""
     avatar_url = serializers.SerializerMethodField()
     is_online = serializers.SerializerMethodField()
+    profile_summary = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'firstname', 'lastname', 'avatar_url', 'is_online']
+        fields = [
+            'id', 'username', 'firstname', 'lastname', 'full_name', 
+            'user_type', 'avatar_url', 'is_online', 'profile_summary'
+        ]
         
     def get_avatar_url(self, obj):
+        # Check both user avatar and profile picture
         if hasattr(obj, 'avatar') and obj.avatar:
             return obj.avatar.url
+            
+        # Check profile-specific avatar
+        try:
+            if obj.user_type == 'talent' and hasattr(obj, 'talent_profile'):
+                if obj.talent_profile.profile_picture:
+                    return obj.talent_profile.profile_picture.url
+            elif obj.user_type == 'mentor' and hasattr(obj, 'mentor_profile'):
+                if obj.mentor_profile.profile_picture:
+                    return obj.mentor_profile.profile_picture.url
+        except:
+            pass
+            
         return None
         
     def get_is_online(self, obj):
@@ -252,3 +315,31 @@ class UserSearchSerializer(serializers.ModelSerializer):
             return obj.presence.status == 'online'
         except:
             return False
+    
+    def get_profile_summary(self, obj):
+        """Get brief profile summary for search context"""
+        try:
+            if obj.user_type == 'talent' and hasattr(obj, 'talent_profile'):
+                profile = obj.talent_profile
+                sports = profile.selected_sports[:3] if isinstance(profile.selected_sports, list) else []
+                return {
+                    'sports': sports,
+                    'experience_years': profile.experience_years,
+                    'is_verified': profile.is_verified,
+                    'location': f"{profile.city}, {profile.state}" if profile.city and profile.state else None
+                }
+            elif obj.user_type == 'mentor' and hasattr(obj, 'mentor_profile'):
+                profile = obj.mentor_profile
+                sports = profile.selected_sports[:3] if isinstance(profile.selected_sports, list) else []
+                return {
+                    'sports': sports,
+                    'coaching_experience': profile.coaching_experience_years,
+                    'coaching_level': profile.coaching_levels,
+                    'is_verified': profile.is_verified,
+                    'is_available': profile.is_available,
+                    'location': f"{profile.city}, {profile.state}" if profile.city and profile.state else None
+                }
+        except:
+            pass
+            
+        return {}

@@ -20,4 +20,4 @@ python manage.py migrate
 echo "🧹 Running cleanup for orphaned data..."
 python manage.py cleanup_chat --days=30 || echo "⚠️ Cleanup failed, continuing..."
 
-echo "✅ Build Complete! Ready for ASGI deployment with WebSocket support."
+echo "✅ Build Complete! Ready for Socket.io deployment with WSGI + Eventlet."
