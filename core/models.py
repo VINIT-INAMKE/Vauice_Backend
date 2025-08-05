@@ -96,9 +96,16 @@ def update_talent_pool_on_profile_save(sender, instance, created, **kwargs):
     """
     Automatically add/remove talent from mentor pools based on onboarding completion
     Only add talents with onboarding_done True to the pool
+    ONLY runs on profile creation, not on every profile update
     """
     from django.contrib.auth import get_user_model
     User = get_user_model()
+    
+    # Only run this logic when the profile is first created
+    # NOT on every profile update (like image uploads)
+    if not created:
+        return
+    
     mentors = User.objects.filter(user_type='mentor')
     if hasattr(instance, 'user') and getattr(instance.user, 'onboarding_done', False):
         # Add talent to all mentor pools if not already there
