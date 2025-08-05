@@ -287,13 +287,54 @@ class ListRejectedTalentsAPIView(generics.ListAPIView):
 
 class AddPostAPIView(generics.CreateAPIView):
     serializer_class = PostSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        # Verify user is a talent
+        if request.user.user_type != 'talent':
+            return Response({'error': 'Only talents can create posts.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get talent profile
+        try:
+            talent_profile = request.user.talent_profile
+        except:
+            return Response({'error': 'Talent profile not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Add talent to request data
+        data = request.data.copy()
+        data['talent'] = talent_profile.id
+        
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DeletePostAPIView(generics.DestroyAPIView):
     serializer_class = PostSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     queryset = Post.objects.all()
     lookup_field = 'pk'
+    
+    def get_object(self):
+        post = super().get_object()
+        
+        # Verify user is a talent
+        if self.request.user.user_type != 'talent':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied('Only talents can delete posts.')
+        
+        # Verify the post belongs to the talent
+        try:
+            talent_profile = self.request.user.talent_profile
+            if post.talent != talent_profile:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied('You can only delete your own posts.')
+        except:
+            from rest_framework.exceptions import NotFound
+            raise NotFound('Talent profile not found.')
+        
+        return post
 
 class AddLikeAPIView(generics.CreateAPIView):
     serializer_class = PostLikeSerializer
