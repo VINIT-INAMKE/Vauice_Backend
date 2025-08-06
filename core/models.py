@@ -91,32 +91,38 @@ class MentorTalentRejection(models.Model):
 
 
 # Signal handlers to manage talent pool automatically
-@receiver(post_save, sender='talent.TalentProfile')
-def update_talent_pool_on_profile_save(sender, instance, created, **kwargs):
+@receiver(post_save, sender='userauths.User')
+def update_talent_pool_on_user_onboarding_change(sender, instance, created, update_fields, **kwargs):
     """
-    Automatically add/remove talent from mentor pools based on onboarding completion
-    Only add talents with onboarding_done True to the pool
-    ONLY runs on profile creation, not on every profile update
+    Automatically add/remove talent from mentor pools when onboarding_done status changes
+    This ensures talent pool is managed based on actual onboarding completion
     """
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-    
-    # Only run this logic when the profile is first created
-    # NOT on every profile update (like image uploads)
-    if not created:
+    # Only handle talent users
+    if instance.user_type != 'talent':
         return
     
+    # Only proceed if onboarding_done field was updated
+    if update_fields and 'onboarding_done' not in update_fields:
+        return
+        
+    # Only proceed if user has a talent profile
+    if not hasattr(instance, 'talent_profile'):
+        return
+        
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
     mentors = User.objects.filter(user_type='mentor')
-    if hasattr(instance, 'user') and getattr(instance.user, 'onboarding_done', False):
+    
+    if instance.onboarding_done:
         # Add talent to all mentor pools if not already there
         for mentor in mentors:
             TalentPool.objects.get_or_create(
                 mentor=mentor,
-                talent=instance.user
+                talent=instance
             )
     else:
         # Remove talent from all mentor pools if onboarding is not done
-        TalentPool.objects.filter(talent=instance.user).delete()
+        TalentPool.objects.filter(talent=instance).delete()
 
 
 @receiver(post_save, sender='mentor.MentorProfile')
