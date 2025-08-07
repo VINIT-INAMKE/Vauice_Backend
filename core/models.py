@@ -114,12 +114,18 @@ def update_talent_pool_on_user_onboarding_change(sender, instance, created, upda
     mentors = User.objects.filter(user_type='mentor')
     
     if instance.onboarding_done:
-        # Add talent to all mentor pools if not already there
+        # Add talent to mentor pools, but exclude mentors who have already selected or rejected this talent
         for mentor in mentors:
-            TalentPool.objects.get_or_create(
-                mentor=mentor,
-                talent=instance
-            )
+            # Check if this mentor has already selected or rejected this talent
+            already_selected = MentorTalentSelection.objects.filter(mentor=mentor, talent=instance).exists()
+            already_rejected = MentorTalentRejection.objects.filter(mentor=mentor, talent=instance).exists()
+            
+            # Only add to pool if not already selected or rejected
+            if not already_selected and not already_rejected:
+                TalentPool.objects.get_or_create(
+                    mentor=mentor,
+                    talent=instance
+                )
     else:
         # Remove talent from all mentor pools if onboarding is not done
         TalentPool.objects.filter(talent=instance).delete()
