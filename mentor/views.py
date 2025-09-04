@@ -300,13 +300,9 @@ class AddPostAPIView(generics.CreateAPIView):
         except:
             return Response({'error': 'Talent profile not found.'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Add talent to request data
-        data = request.data.copy()
-        data['talent'] = talent_profile.id
-        
-        serializer = self.get_serializer(data=data)
+        serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(talent=talent_profile)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
